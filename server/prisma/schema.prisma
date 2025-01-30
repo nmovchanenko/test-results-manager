@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Execution {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+  type        String
+  name        String
+  environment String
+  version     String // playwright version
+  startedAt   DateTime
+  Result      Result[]
+}
+
+model Spec {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+  key         String   @unique // e.g. TestRail Id
+  file        String
+  title       String
+  tags        String
+  annotations String?
+  Result      Result[]
+}
+
+model Result {
+  id                   Int       @id @default(autoincrement())
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @default(now())
+  allureLink           String?
+  retry                Int
+  status               String
+  duration             Int
+  startTime            DateTime
+  errorType            String?
+  errorMessage         String?
+  errorCallLog         String?
+  errorCallStack       String?
+  errorTestAssertion   String?
+  errorExpectedPattern String?
+  errorReceivedString  String?
+  errorLocation        String?
+  issue                Issue?    @relation(fields: [issueId], references: [id])
+  issueId              Int?
+  spec                 Spec      @relation(fields: [specId], references: [id])
+  specId               Int
+  execution            Execution @relation(fields: [executionId], references: [id])
+  executionId          Int
+}
+
+model Issue {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+  name        String
+  category    String
+  description String?
+  portal      String?
+  service     String?
+  ticket      String?
+  Result      Result[]
+}

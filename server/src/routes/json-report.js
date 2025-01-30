@@ -1,0 +1,133 @@
+import {json, Router} from "express";
+import {dbClient} from "../../prisma/client.js";
+import getLogger from '../lib/logger.js';
+import {parseStackTrace} from '../lib/parse-error.js';
+
+const logger = getLogger('server');
+const router = Router();
+
+router.post('/json-report', async (request, response, next) => {
+    const report = request.body;
+
+    try {
+        let executionRecord = await dbClient.execution.findFirst({
+            where: {
+                name: report.runId
+            }
+        });
+
+        if (!executionRecord) {
+            const {runId, env, version, stats} = report;
+
+            executionRecord = await dbClient.execution.create({
+                data: {
+                    type: 'nightly',
+                    name: runId,
+                    environment: env,
+                    version,
+                    startedAt: stats.startTime
+                }
+            });
+
+            logger.info(`create new execution record: ${executionRecord.id}`);
+        }
+
+        if (!report.tests || !report.tests.length) {
+            throw new Error(`Execution #${executionRecord.id} has no specs`);
+        }
+
+        for (const spec of report.tests) {
+            if (!spec.title) {
+                throw new Error(`Spec data is missing title: ${spec.location?.file}`);
+            }
+
+            let [specKey] = spec.title.match(/C\d+/) || [];
+
+            if (!specKey) {
+                specKey = spec.custom_id;
+            }
+
+            let specRecord = await dbClient.spec.findFirst({
+                where: {
+                    key: specKey
+                }
+            });
+
+            if (!specRecord) {
+                specRecord = await dbClient.spec.create({
+                    data: {
+                        key: specKey,
+                        file: spec.location.file,
+                        title: spec.title,
+                        tags: JSON.stringify(spec.tags),
+                        annotations: JSON.stringify(spec.annotations)
+                    }
+                });
+
+                logger.info(`spec record added ${specRecord.id}`);
+            }
+
+            if (!spec.results || !spec.results?.length) {
+                throw new Error(`Spec (#${specRecord.id}) report has no results data`);
+            }
+
+            for (const result of spec.results) {
+                let resultRecord = await dbClient.result.findFirst({
+                    where: {
+                        specId: specRecord.id,
+                        executionId: executionRecord.id,
+                        startTime: new Date(result.startTime)
+                    }
+                });
+
+                if (!resultRecord) {
+                    const recordData = {
+                        allureLink: 'some.link',
+                        retry: result.retry,
+                        status: result.status,
+                        duration: result.duration,
+                        startTime: result.startTime,
+                        spec: {
+                            connect: {
+                                id: specRecord.id
+                            }
+                        },
+                        execution: {
+                            connect: {
+                                id: executionRecord.id
+                            }
+                        }
+                    };
+
+                    if (result.error) {
+                        const parsedError = parseStackTrace(result.error);
+
+                        recordData.errorType = parsedError.type;
+                        recordData.errorMessage = parsedError.message;
+                        recordData.errorCallLog = JSON.stringify(parsedError.callLog);
+                        recordData.errorCallStack = JSON.stringify(parsedError.callStack);
+                        recordData.errorTestAssertion = parsedError.testAssertion;
+                        recordData.errorExpectedPattern = parsedError.expectedPattern;
+                        recordData.errorReceivedString = parsedError.receivedString;
+                        recordData.errorLocation = `${parsedError.location.file}:${parsedError.location.line}`;
+                    }
+
+                    resultRecord = await dbClient.result.create({
+                        data: recordData
+                    });
+
+                    logger.info(`new result record added #${resultRecord.id}`);
+                }
+            }
+        }
+
+        return response.status(200).json({
+            success: true
+        });
+    } catch (e) {
+        next(e);
+    }
+
+});
+
+export default router;
