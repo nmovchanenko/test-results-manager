@@ -1,6 +1,6 @@
-import {json, Router} from "express";
-import {dbClient} from "../../prisma/client.js";
+import {Router} from "express";
 import getLogger from '../lib/logger.js';
+import {dbClient} from "../../prisma/client.js";
 import {parseStackTrace} from '../lib/parse-error.js';
 
 const logger = getLogger('server');
@@ -82,7 +82,7 @@ router.post('/json-report', async (request, response, next) => {
 
                 if (!resultRecord) {
                     const recordData = {
-                        allureLink: 'some.link',
+                        allureLink: result.allureLink,
                         retry: result.retry,
                         status: result.status,
                         duration: result.duration,
@@ -127,7 +127,6 @@ router.post('/json-report', async (request, response, next) => {
     } catch (e) {
         next(e);
     }
-
 });
 
 export default router;
