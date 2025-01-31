@@ -27,6 +27,16 @@ router.get('/results', async (req, res) => {
         where: whereFilter,
     });
 
+    for (const record of resultRecords) {
+        if (record.errorCallLog) {
+            record.errorCallLog = JSON.parse(record.errorCallLog);
+        }
+
+        if (record.errorCallStack) {
+            record.errorCallStack = JSON.parse(record.errorCallStack);
+        }
+    }
+
     return res.status(200).json(resultRecords);
 });
 
@@ -40,7 +50,7 @@ router.get('/results/:resultId', async (req, res) => {
     });
 
     return res.status(200).json(resultRecord);
-})
+});
 
 router.patch('/results/:resultId/assign-issue', async (req, res) => {
     const { resultId } = req.params;
