@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 import express from "express";
+import cors from "cors";
 import parseCookie from "cookie-parser";
 import session from "express-session";
 import {PrismaSessionStore} from '@quixo3/prisma-session-store';
@@ -16,6 +17,7 @@ const loggingMiddleware = (req, res, next) => {
 }
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 app.use(session({
     secret: 'qwerty@12345',
