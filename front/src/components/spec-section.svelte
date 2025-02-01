@@ -1,8 +1,10 @@
 <script>
     import {loadIssue} from '../utils/load.js';
+    import IssueSidebar from './IssueSidebar.svelte';
 
     let {specResults, dateRange} = $props();
     let {spec, executions} = specResults;
+    let showSidebar = $state(false);
     let dateNames = $derived.by(() => {
         const daysList = dateRange.map(d => new Intl.DateTimeFormat('en-US', {
             day: '2-digit',
@@ -11,6 +13,14 @@
 
         return Array.from(new Set(daysList));
     });
+
+    function openSidebar() {
+        showSidebar = true;
+    }
+
+    function closeSidebar() {
+        showSidebar = false;
+    }
 </script>
 
 
@@ -57,10 +67,18 @@
                             <p class="col">...loading issue</p>
                         {:then issue}
                             <p class="col">{issue.name}</p>
-                            <button class="button clear">Edit Issue</button>
+                            <button onclick={openSidebar}>Edit Issue</button>
+
+                            {#if showSidebar}
+                                <IssueSidebar {result} {issue} on:closeSidebar={closeSidebar} />
+                            {/if}
                         {/await}
                     {:else}
-                        <button class="button clear">Assign Issue</button>
+                        <button onclick={openSidebar}>Assign Issue</button>
+                    {/if}
+
+                    {#if showSidebar}
+                        <IssueSidebar {result} on:closeSidebar={closeSidebar} />
                     {/if}
                 {/if}
 
