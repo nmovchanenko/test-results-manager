@@ -4,9 +4,35 @@ import {dbClient} from '../../prisma/client.js';
 const router = Router();
 
 router.get('/issues', async (req, res) => {
-    const issueRecords = await dbClient.issue.findMany();
+    const { category, name, page = 1, limit = 30 } = req.query;
 
-    return res.status(200).json(issueRecords);
+    try {
+        const issues = await dbClient.issue.findMany({
+            where: {
+                category: category || undefined,
+                name: name ? { contains: name } : undefined,
+            },
+            skip: (page - 1) * limit,
+            take: Number(limit),
+            orderBy: { createdAt: 'desc' },
+        });
+
+        const totalIssues = await dbClient.issue.count({
+            where: {
+                category: category || undefined,
+                name: name ? { contains: name } : undefined,
+            },
+        });
+
+        return res.status(200).json({
+            issues,
+            total: totalIssues,
+            page: Number(page),
+            totalPages: Math.ceil(totalIssues / limit),
+        });
+    } catch (error) {
+        throw new Error(`Failed to fetch issues. ${error.message}`);
+    }
 });
 
 

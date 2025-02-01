@@ -1,37 +1,56 @@
 <script>
     import { onMount } from 'svelte';
 
-    let issues = [];       // All issues from the backend
-    let filteredIssues = []; // Filtered issues displayed in the UI
-
-    // Filter criteria
+    let issues = [];
     let filterCategory = '';
     let filterName = '';
-    let filterPortal = '';
 
-    // Load issues from the backend on component mount
-    onMount(async () => {
-        const res = await fetch('http://localhost:3001/api/issues');
-        issues = await res.json();
-        filteredIssues = issues; // Initialize filteredIssues with all issues
+    let page = 1;
+    let totalPages = 1;
+
+    async function loadIssues() {
+        const queryParams = new URLSearchParams({
+            category: filterCategory,
+            name: filterName,
+            page,
+            limit: 10,
+        });
+
+        const res = await fetch(`http://localhost:3001/api/issues?${queryParams}`);
+        const data = await res.json();
+        issues = data.issues;
+        totalPages = data.totalPages;
+    }
+
+    onMount(() => {
+        loadIssues();
     });
 
-    // Filter function to apply name and category filters
-    function filterIssues() {
-        filteredIssues = issues.filter(issue => {
-            const matchesCategory = filterCategory ? issue.category === filterCategory : true;
-            const matchesPortal = filterPortal ? issue.portal === filterPortal : true;
-            const matchesName = filterName ? issue.name.toLowerCase().includes(filterName.toLowerCase()) : true;
-            return matchesCategory && matchesPortal && matchesName;
-        });
+    function applyFilters() {
+        page = 1;
+        loadIssues();
+    }
+
+    function nextPage() {
+        if (page < totalPages) {
+            page += 1;
+            loadIssues();
+        }
+    }
+
+    function prevPage() {
+        if (page > 1) {
+            page -= 1;
+            loadIssues();
+        }
     }
 </script>
 
-<!-- Filter Section -->
+<!-- Filters -->
 <div class="filters">
     <label>
         Category:
-        <select bind:value={filterCategory} on:change={filterIssues}>
+        <select bind:value={filterCategory} on:change={applyFilters}>
             <option value="">All</option>
             <option value="Bug">Bug</option>
             <option value="Improvement">Improvement</option>
@@ -40,26 +59,15 @@
     </label>
 
     <label>
-        Portal:
-        <select bind:value={filterPortal} on:change={filterIssues}>
-            <option value="">All</option>
-            <option value="Renter">Renter</option>
-            <option value="Admin">Admin</option>
-            <option value="Admin-Msa">Admin MSA</option>
-            <option value="Landlord">Landlord</option>
-        </select>
-    </label>
-
-    <label>
         Name:
-        <input type="text" placeholder="Search by name..." bind:value={filterName} on:input={filterIssues} />
+        <input type="text" placeholder="Search by name..." bind:value={filterName} on:input={applyFilters} />
     </label>
 </div>
 
 <!-- Issues List -->
 <div class="issues-list">
-    {#if filteredIssues.length > 0}
-        {#each filteredIssues as issue}
+    {#if issues.length > 0}
+        {#each issues as issue}
             <div class="issue-card">
                 <h3>{issue.name}</h3>
                 <p><strong>Category:</strong> {issue.category}</p>
@@ -71,21 +79,18 @@
     {/if}
 </div>
 
+<!-- Pagination Controls -->
+<div class="pagination">
+    <button on:click={prevPage} disabled={page === 1}>Previous</button>
+    <span>Page {page} of {totalPages}</span>
+    <button on:click={nextPage} disabled={page === totalPages}>Next</button>
+</div>
+
 <style>
     .filters {
         display: flex;
         gap: 20px;
         margin-bottom: 20px;
-    }
-
-    label {
-        display: flex;
-        flex-direction: column;
-    }
-
-    input, select {
-        padding: 8px;
-        margin-top: 5px;
     }
 
     .issues-list {
@@ -99,5 +104,17 @@
         border: 1px solid #ddd;
         border-radius: 5px;
         background-color: #fafafa;
+    }
+
+    .pagination {
+        margin-top: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 </style>
