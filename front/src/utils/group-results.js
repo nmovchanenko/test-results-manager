@@ -28,3 +28,34 @@ export function groupResults(resultRecords) {
 
     return groupedBySpecs;
 }
+
+export function groupBySpecs(results) {
+    const groupedBySpecs = {};
+
+    for (const resultRecord of results) {
+        const {spec, execution, ...result} = resultRecord;
+        const specId = spec.id;
+
+        if (!groupedBySpecs[specId]) {
+            groupedBySpecs[specId] = {
+                spec,
+                executions: {}
+            };
+        }
+
+        const group = groupedBySpecs[specId];
+        const executionId = result.executionId;
+
+        if (!group.executions[executionId]) {
+            group.executions[executionId] = {
+                execution,
+                results: []
+            };
+        }
+
+        const executionGroup = group.executions[executionId];
+        executionGroup.results.push(result);
+    }
+
+    return groupedBySpecs;
+}

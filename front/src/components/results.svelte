@@ -87,31 +87,32 @@
         {#if sidebarExpanded}
             <div class="filter-group">
                 <h3>Spec Filters</h3>
-                <label>Tags: <input type="text" bind:value={filterTag} on:input={applyFilters} /></label>
-                <label>Spec ID: <input type="number" bind:value={filterSpecId} on:input={applyFilters} /></label>
-                <label>Spec File: <input type="text" bind:value={filterSpecFile} on:input={applyFilters} /></label>
-                <label>Spec Name: <input type="text" bind:value={filterSpecName} on:input={applyFilters} /></label>
+                <label>Tags: <input type="text" bind:value={filterTag} oninput={applyFilters} /></label>
+                <label>Spec ID: <input type="number" bind:value={filterSpecId} oninput={applyFilters} /></label>
+                <label>Spec File: <input type="text" bind:value={filterSpecFile} oninput={applyFilters} /></label>
+                <label>Spec Name: <input type="text" bind:value={filterSpecName} oninput={applyFilters} /></label>
             </div>
 
             <div class="filter-group">
                 <h3>Execution Filters</h3>
-                <label>Environment: <input type="text" bind:value={filterEnvironment} on:input={applyFilters} /></label>
-                <label>Type: <input type="text" bind:value={filterType} on:input={applyFilters} /></label>
+                <label>Environment: <input type="text" bind:value={filterEnvironment} oninput={applyFilters} /></label>
+                <label>Type: <input type="text" bind:value={filterType} oninput={applyFilters} /></label>
             </div>
 
             <div class="filter-group">
                 <h3>Result Filters</h3>
-                <label>Status:
-                    <select bind:value={filterStatus} on:change={applyFilters}>
-                        <option value="">All</option>
-                        <option value="passed">Passed</option>
-                        <option value="failed">Failed</option>
-                        <option value="skipped">Skipped</option>
-                    </select>
-                </label>
+                <label>Status: <input type="text" bind:value={filterStatus} oninput={applyFilters} /></label>
+<!--                <label>Status:-->
+<!--                    <select bind:value={filterStatus} onchange={applyFilters}>-->
+<!--                        <option value="">All</option>-->
+<!--                        <option value="passed">Passed</option>-->
+<!--                        <option value="failed">Failed</option>-->
+<!--                        <option value="skipped">Skipped</option>-->
+<!--                    </select>-->
+<!--                </label>-->
 
                 <label>Review Status:
-                    <select bind:value={filterReviewStatus} on:change={applyFilters}>
+                    <select bind:value={filterReviewStatus} onchange={applyFilters}>
                         <option value="">All</option>
                         <option value="approved">Approved</option>
                         <option value="needs review">Needs Review</option>
@@ -119,8 +120,8 @@
                     </select>
                 </label>
 
-                <label>From: <input type="date" bind:value={filterFromDate} on:change={applyFilters} /></label>
-                <label>To: <input type="date" bind:value={filterToDate} on:change={applyFilters} /></label>
+                <label>From: <input type="date" bind:value={filterFromDate} onchange={applyFilters} /></label>
+                <label>To: <input type="date" bind:value={filterToDate} onchange={applyFilters} /></label>
             </div>
         {/if}
     </aside>
@@ -142,14 +143,14 @@
 
         <!-- Pagination Controls -->
         <div class="pagination">
-            <button on:click={prevPage} disabled={page === 1}>Previous</button>
+            <button onclick={prevPage} disabled={page === 1}>Previous</button>
             <span>Page {page} of {totalPages}</span>
-            <button on:click={nextPage} disabled={page === totalPages}>Next</button>
+            <button onclick={nextPage} disabled={page === totalPages}>Next</button>
         </div>
     </section>
 
     <!-- Toggle Button (Outside Sidebar) -->
-    <button class="toggle-btn" on:click={toggleSidebar}>
+    <button class="toggle-btn" onclick={toggleSidebar}>
         {#if sidebarExpanded} &laquo; Hide Filters {/if}
         {#if !sidebarExpanded} &raquo; Show Filters {/if}
     </button>
