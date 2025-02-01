@@ -12,6 +12,9 @@ router.get('/specs/:specId', async (req, res) => {
         }
     });
 
+    record.tags = JSON.parse(record.tags);
+    record.annotations = JSON.parse(record.annotations);
+
     return res.status(200).json(record);
 });
 
