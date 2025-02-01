@@ -1,8 +1,7 @@
 <script>
   import {loadResults, loadIssues} from './utils/load.js';
-  import Filter from './components/filter.svelte';
-  import SpecSection from './components/spec-section.svelte';
   import Issues from './components/issues.svelte';
+  import Results from './components/results.svelte';
 
   let resultsPromise = $state(loadResults());
   let issuesPromise = $state(loadIssues());
@@ -26,24 +25,9 @@
 
 <div class="content">
   {#if activeTab === 'results'}
-    <Filter/>
-    {#await resultsPromise}
-      <p>...loading results</p>
-    {:then results}
-      <p>Loaded {results.size} results</p>
-      {#each results.values() as group}
-        <SpecSection specResults={group} dateRange={selectedDateRange}/>
-        <pre>{JSON.stringify(group.spec, null, 4)}</pre>
-        <pre>{JSON.stringify(Array.from(group.executions.values()), null, 4)}</pre>
-      {/each}
-    {/await}
+    <Results/>
   {:else}
-    {#await issuesPromise}
-      <p>...loading issues</p>
-    {:then issues}
-      <p>Loaded {issues.length} issues</p>
-      <Issues {issues}/>
-    {/await}
+    <Issues/>
   {/if}
 </div>
 
