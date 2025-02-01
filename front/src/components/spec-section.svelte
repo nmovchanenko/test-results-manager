@@ -1,5 +1,4 @@
 <script>
-    import {loadIssue} from '../utils/load.js';
     import IssueSidebar from './IssueSidebar.svelte';
 
     let {specResults, dateRange} = $props();
@@ -62,17 +61,13 @@
                 {#if result.errorMessage}
                     <p class="col">{result.errorMessage}</p>
 
-                    {#if result.issueId}
-                        {#await loadIssue(result.issueId)}
-                            <p class="col">...loading issue</p>
-                        {:then issue}
-                            <p class="col">{issue.name}</p>
-                            <button onclick={openSidebar}>Edit Issue</button>
+                    {#if result.issue}
+                        <p class="col">{result.issue.name}</p>
+                        <button onclick={openSidebar}>Edit Issue</button>
 
-                            {#if showSidebar}
-                                <IssueSidebar {result} {issue} on:closeSidebar={closeSidebar} />
-                            {/if}
-                        {/await}
+                        {#if showSidebar}
+                            <IssueSidebar {result} on:closeSidebar={closeSidebar} />
+                        {/if}
                     {:else}
                         <button onclick={openSidebar}>Assign Issue</button>
                     {/if}

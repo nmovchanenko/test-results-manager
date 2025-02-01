@@ -1,13 +1,8 @@
 <script>
-  import {loadResults, loadIssues} from './utils/load.js';
   import Issues from './components/issues.svelte';
   import Results from './components/results.svelte';
 
-  let resultsPromise = $state(loadResults());
-  let issuesPromise = $state(loadIssues());
   let activeTab = $state('results');
-
-  let selectedDateRange = [new Date('2025-01-14T06:06:48.643Z'), new Date('2025-01-14T07:04:04.662Z')];
 
   function switchTab(tab) {
     activeTab = tab;
