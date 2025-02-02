@@ -1,71 +1,69 @@
 <script>
-    import { onMount } from 'svelte';
     import { tweened } from 'svelte/motion';
     import { cubicOut } from 'svelte/easing';
-    import {groupResults} from '../utils/group-results.js';
+    import {groupBySpecs} from '../utils/group-results.js';
     import SpecSection from './spec-section.svelte';
-    import {SvelteURLSearchParams} from 'svelte/reactivity';
     import {FilterParams} from '../stores/resultFilters.svelte.js';
 
-    let selectedDateRange = [new Date('2025-01-14T06:06:48.643Z'), new Date('2025-01-15T07:04:04.662Z'), new Date('2025-01-16T07:04:04.662Z')];
-    let results = $state(new Map());
+    let {resultsList} = $props();
     let sidebarExpanded = $state(true);
+    let filteredResultList = $derived.by(() => {
+        console.log(JSON.stringify(FilterParams, null, 4));
+        const filteredResults = resultsList.filter(result => {
+            const hasTag = FilterParams.tag ? result.spec.tags.map(t => t.toLowerCase()).includes(FilterParams.tag.toLowerCase()) : true;
+            const hasSpecKey = FilterParams.specId ? result.spec.key.toLowerCase().includes(FilterParams.specId.toLowerCase()) : true;
+            const hasSpecFile = FilterParams.specFile ? result.spec.file.toLowerCase().includes(FilterParams.specFile.toLowerCase()) : true;
+            const hasSpecName = FilterParams.specName ? result.spec.title.toLowerCase().includes(FilterParams.specName.toLowerCase()) : true;
+
+            const hasEnv = FilterParams.environment ? result.execution.environment.toLowerCase() === FilterParams.environment.toLowerCase() : true;
+            const hasType = FilterParams.type ? result.execution.type.toLowerCase() === FilterParams.type.toLowerCase() : true;
+
+            const reviewStatus = Boolean(result.issue) ? 'completed' : (result.status === 'passed' ? 'completed' : 'inCompleted');
+            const hasStatus = FilterParams.status ? result.status.toLowerCase() === FilterParams.status.toLowerCase() : true;
+            const hasReviewStatus = FilterParams.reviewStatus ? reviewStatus.toLowerCase() === FilterParams.reviewStatus.toLowerCase() : true;
+
+            return hasTag && hasSpecKey && hasSpecFile && hasSpecName && hasEnv && hasType && hasStatus && hasReviewStatus;
+        });
+
+        return Object.values(groupBySpecs(filteredResults));
+    });
+
+    let selectedDateRange = [new Date('2025-01-14T06:06:48.643Z'), new Date('2025-01-15T07:04:04.662Z'), new Date('2025-01-16T07:04:04.662Z')];
 
     const sidebarWidth = tweened(300, { duration: 100, easing: cubicOut });
 
-    // Pagination State
     let totalPages = 1;
-
-    // Load Results from API
-    async function loadResults() {
-        const queryParams = new SvelteURLSearchParams(FilterParams);
-
-        const res = await fetch(`http://localhost:3001/api/results?${queryParams}`);
-        const data = await res.json();
-        results = groupResults(data.results);
-        totalPages = results.size;
-    }
-
-    onMount(() => {
-        loadResults();
-    });
 
     function applyFilters() {
         FilterParams.page = 1;
-        loadResults();
     }
 
     function nextPage() {
         if (FilterParams.page < totalPages) {
             FilterParams.page += 1;
-            loadResults();
         }
     }
 
     function prevPage() {
         if (FilterParams.page > 1) {
             FilterParams.page -= 1;
-            loadResults();
         }
     }
 
-    // Toggle Sidebar
     function toggleSidebar() {
         sidebarExpanded = !sidebarExpanded;
         sidebarWidth.set(sidebarExpanded ? 300 : 0); // Collapse to 0px or expand to 300px
     }
 </script>
 
-<!-- Main Container: Sidebar (Left) + Content (Right) -->
 <div class="main-container">
 
-    <!-- Sidebar with Filters -->
     <aside class="sidebar" style="width: {$sidebarWidth}px;">
         {#if sidebarExpanded}
             <div class="filter-group">
                 <h3>Spec Filters</h3>
                 <label>Tags: <input type="text" bind:value={FilterParams.tag} oninput={applyFilters} /></label>
-                <label>Spec ID: <input type="number" bind:value={FilterParams.specId} oninput={applyFilters} /></label>
+                <label>Spec ID: <input type="text" bind:value={FilterParams.specId} oninput={applyFilters} /></label>
                 <label>Spec File: <input type="text" bind:value={FilterParams.specFile} oninput={applyFilters} /></label>
                 <label>Spec Name: <input type="text" bind:value={FilterParams.specName} oninput={applyFilters} /></label>
             </div>
@@ -78,22 +76,20 @@
 
             <div class="filter-group">
                 <h3>Result Filters</h3>
-                <label>Status: <input type="text" bind:value={FilterParams.status} oninput={applyFilters} /></label>
-<!--                <label>Status:-->
-<!--                    <select bind:value={filterStatus} onchange={applyFilters}>-->
-<!--                        <option value="">All</option>-->
-<!--                        <option value="passed">Passed</option>-->
-<!--                        <option value="failed">Failed</option>-->
-<!--                        <option value="skipped">Skipped</option>-->
-<!--                    </select>-->
-<!--                </label>-->
+                <label>Status:
+                    <select bind:value={FilterParams.status} onchange={applyFilters}>
+                        <option value="">All</option>
+                        <option value="passed">Passed</option>
+                        <option value="failed">Failed</option>
+                        <option value="skipped">Skipped</option>
+                    </select>
+                </label>
 
                 <label>Review Status:
                     <select bind:value={FilterParams.reviewStatus} onchange={applyFilters}>
                         <option value="">All</option>
-                        <option value="approved">Approved</option>
-                        <option value="needs review">Needs Review</option>
-                        <option value="rejected">Rejected</option>
+                        <option value="completed">Completed</option>
+                        <option value="inCompleted">Not Completed</option>
                     </select>
                 </label>
 
@@ -107,8 +103,8 @@
     <section class="content">
         <h2>Results</h2>
         <div class="results-list">
-            {#if results.size > 0}
-                {#each results.values() as result}
+            {#if filteredResultList.length > 0}
+                {#each filteredResultList as result}
                     <div class="result-card">
                         <SpecSection specResults={result} dateRange={selectedDateRange}/>
                     </div>

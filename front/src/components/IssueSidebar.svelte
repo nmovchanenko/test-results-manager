@@ -2,6 +2,9 @@
     import { createEventDispatcher } from 'svelte';
 
     let {result} = $props();
+    $effect(() => {
+        console.log(JSON.stringify(result, null, 4));
+    })
     const dispatch = createEventDispatcher();
 
     let name = '';

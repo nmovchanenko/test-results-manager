@@ -2,7 +2,8 @@
     import IssueSidebar from './IssueSidebar.svelte';
 
     let {specResults, dateRange} = $props();
-    let {spec, executions} = specResults;
+    let spec = $derived(specResults.spec);
+    let executions = $derived(specResults.executions);
     let showSidebar = $state(false);
     let dateNames = $derived.by(() => {
         const daysList = dateRange.map(d => new Intl.DateTimeFormat('en-US', {
@@ -44,7 +45,7 @@
         {/if}
     </div>
 
-    {#each executions.values() as executionGroup}
+    {#each Object.values(executions) as executionGroup}
         <div class="row">
             <p class="col">{executionGroup.execution.environment}</p>
             <p class="col">{executionGroup.execution.type}</p>
