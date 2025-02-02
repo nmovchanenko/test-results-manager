@@ -1,18 +1,12 @@
 <script>
-    import { createEventDispatcher } from 'svelte';
-
-    let {result} = $props();
-    const dispatch = createEventDispatcher();
-
-    let name = '';
-    let category = '';
-    let description = '';
+    let {result, closeSidebar} = $props();
+    let issue = $state(result.issue || { name: '', category: '', description: '' });
 
     async function submitIssue() {
         const issueResponse = await fetch(`http://localhost:3001/api/issues`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, category, description }),
+            body: JSON.stringify(issue),
         });
 
         if (!issueResponse.ok) {
@@ -28,7 +22,7 @@
         });
 
         if (res.ok) {
-            dispatch('closeSidebar'); // Close sidebar after successful assignment
+            closeSidebar();
         } else {
             console.error('Failed to assign issue');
         }
@@ -40,12 +34,12 @@
 
     <label>
         Name:
-        <input type="text" bind:value={name} placeholder="Issue name" />
+        <input type="text" bind:value={issue.name} placeholder="Issue name" />
     </label>
 
     <label>
         Category:
-        <select bind:value={category}>
+        <select bind:value={issue.category}>
             <option value="" disabled selected>Select category</option>
             <option value="Bug">Bug</option>
             <option value="Improvement">Improvement</option>
@@ -55,11 +49,11 @@
 
     <label>
         Description:
-        <input type="text" bind:value={description} placeholder="Issue description" />
+        <input type="text" bind:value={issue.description} placeholder="Issue description" />
     </label>
 
     <button onclick={submitIssue}>Submit</button>
-    <button onclick={() => dispatch('closeSidebar')}>Cancel</button>
+    <button onclick={() => closeSidebar()}>Cancel</button>
 </div>
 
 <style>

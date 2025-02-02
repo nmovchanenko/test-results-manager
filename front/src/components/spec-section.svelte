@@ -1,9 +1,9 @@
 <script>
-    import IssueSidebar from './IssueSidebar.svelte';
+    import InlineIssue from './inline-issue.svelte';
 
     let {specResults, dateRange} = $props();
-    let {spec, executions} = specResults;
-    let showSidebar = $state(false);
+    let spec = $derived(specResults.spec);
+    let executions = $derived(specResults.executions);
     let dateNames = $derived.by(() => {
         const daysList = dateRange.map(d => new Intl.DateTimeFormat('en-US', {
             day: '2-digit',
@@ -13,14 +13,6 @@
         // return Array.from(new Set(daysList));
         return daysList;
     });
-
-    function openSidebar() {
-        showSidebar = true;
-    }
-
-    function closeSidebar() {
-        showSidebar = false;
-    }
 </script>
 
 
@@ -44,7 +36,7 @@
         {/if}
     </div>
 
-    {#each executions.values() as executionGroup}
+    {#each Object.values(executions) as executionGroup}
         <div class="row">
             <p class="col">{executionGroup.execution.environment}</p>
             <p class="col">{executionGroup.execution.type}</p>
@@ -61,21 +53,7 @@
 
                 {#if result.errorMessage}
                     <p class="col">{result.errorMessage}</p>
-
-                    {#if result.issue}
-                        <p class="col">{result.issue.name}</p>
-                        <button onclick={openSidebar}>Edit Issue</button>
-
-                        {#if showSidebar}
-                            <IssueSidebar {result} on:closeSidebar={closeSidebar} />
-                        {/if}
-                    {:else}
-                        <button onclick={openSidebar}>Assign Issue</button>
-                    {/if}
-
-                    {#if showSidebar}
-                        <IssueSidebar {result} on:closeSidebar={closeSidebar} />
-                    {/if}
+                    <InlineIssue {result}/>
                 {/if}
 
             </div>
