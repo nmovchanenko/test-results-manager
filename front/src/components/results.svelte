@@ -25,6 +25,7 @@
             return hasTag && hasSpecKey && hasSpecFile && hasSpecName && hasEnv && hasType && hasStatus && hasReviewStatus;
         });
 
+        console.log(`filtered results: ${filteredResults.length}`);
         return Object.values(groupBySpecs(filteredResults));
     });
 
