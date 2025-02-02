@@ -5,7 +5,7 @@
     import {groupResults} from '../utils/group-results.js';
     import SpecSection from './spec-section.svelte';
 
-    let selectedDateRange = [new Date('2025-01-14T06:06:48.643Z'), new Date('2025-01-14T07:04:04.662Z')];
+    let selectedDateRange = [new Date('2025-01-14T06:06:48.643Z'), new Date('2025-01-15T07:04:04.662Z'), new Date('2025-01-16T07:04:04.662Z')];
     let results = $state(new Map());
     let sidebarExpanded = $state(true);
 

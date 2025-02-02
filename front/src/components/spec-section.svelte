@@ -10,7 +10,8 @@
             month: 'short'
         }).format(d));
 
-        return Array.from(new Set(daysList));
+        // return Array.from(new Set(daysList));
+        return daysList;
     });
 
     function openSidebar() {
@@ -26,7 +27,7 @@
 <div>
     <div class="row">
         {#each dateNames as day}
-            <p class="col">{day}</p>
+            <p class="tag">{day}</p>
         {/each}
     </div>
 
