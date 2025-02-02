@@ -51,7 +51,6 @@ router.get('/issues/:issueId', async (req, res) => {
 
 router.post('/issues', async (req, res) => {
     const issueParams = req.body;
-    console.log(issueParams);
     const issueData = {};
 
     issueData.name = issueParams.name;
