@@ -4,6 +4,8 @@
     import { cubicOut } from 'svelte/easing';
     import {groupResults} from '../utils/group-results.js';
     import SpecSection from './spec-section.svelte';
+    import {SvelteURLSearchParams} from 'svelte/reactivity';
+    import {FilterParams} from '../stores/resultFilters.svelte.js';
 
     let selectedDateRange = [new Date('2025-01-14T06:06:48.643Z'), new Date('2025-01-15T07:04:04.662Z'), new Date('2025-01-16T07:04:04.662Z')];
     let results = $state(new Map());
@@ -11,37 +13,12 @@
 
     const sidebarWidth = tweened(300, { duration: 100, easing: cubicOut });
 
-    // Filter State
-    let filterTag = '';
-    let filterSpecId = '';
-    let filterSpecFile = '';
-    let filterSpecName = '';
-    let filterEnvironment = '';
-    let filterType = '';
-    let filterStatus = '';
-    let filterReviewStatus = '';
-    let filterFromDate = '';
-    let filterToDate = '';
-
     // Pagination State
-    let page = 1;
     let totalPages = 1;
 
     // Load Results from API
     async function loadResults() {
-        const queryParams = new URLSearchParams({
-            tag: filterTag,
-            specId: filterSpecId,
-            specFile: filterSpecFile,
-            specName: filterSpecName,
-            environment: filterEnvironment,
-            type: filterType,
-            status: filterStatus,
-            reviewStatus: filterReviewStatus,
-            from: filterFromDate,
-            to: filterToDate,
-            page,
-        });
+        const queryParams = new SvelteURLSearchParams(FilterParams);
 
         const res = await fetch(`http://localhost:3001/api/results?${queryParams}`);
         const data = await res.json();
@@ -54,20 +31,20 @@
     });
 
     function applyFilters() {
-        page = 1;
+        FilterParams.page = 1;
         loadResults();
     }
 
     function nextPage() {
-        if (page < totalPages) {
-            page += 1;
+        if (FilterParams.page < totalPages) {
+            FilterParams.page += 1;
             loadResults();
         }
     }
 
     function prevPage() {
-        if (page > 1) {
-            page -= 1;
+        if (FilterParams.page > 1) {
+            FilterParams.page -= 1;
             loadResults();
         }
     }
@@ -87,21 +64,21 @@
         {#if sidebarExpanded}
             <div class="filter-group">
                 <h3>Spec Filters</h3>
-                <label>Tags: <input type="text" bind:value={filterTag} oninput={applyFilters} /></label>
-                <label>Spec ID: <input type="number" bind:value={filterSpecId} oninput={applyFilters} /></label>
-                <label>Spec File: <input type="text" bind:value={filterSpecFile} oninput={applyFilters} /></label>
-                <label>Spec Name: <input type="text" bind:value={filterSpecName} oninput={applyFilters} /></label>
+                <label>Tags: <input type="text" bind:value={FilterParams.tag} oninput={applyFilters} /></label>
+                <label>Spec ID: <input type="number" bind:value={FilterParams.specId} oninput={applyFilters} /></label>
+                <label>Spec File: <input type="text" bind:value={FilterParams.specFile} oninput={applyFilters} /></label>
+                <label>Spec Name: <input type="text" bind:value={FilterParams.specName} oninput={applyFilters} /></label>
             </div>
 
             <div class="filter-group">
                 <h3>Execution Filters</h3>
-                <label>Environment: <input type="text" bind:value={filterEnvironment} oninput={applyFilters} /></label>
-                <label>Type: <input type="text" bind:value={filterType} oninput={applyFilters} /></label>
+                <label>Environment: <input type="text" bind:value={FilterParams.environment} oninput={applyFilters} /></label>
+                <label>Type: <input type="text" bind:value={FilterParams.type} oninput={applyFilters} /></label>
             </div>
 
             <div class="filter-group">
                 <h3>Result Filters</h3>
-                <label>Status: <input type="text" bind:value={filterStatus} oninput={applyFilters} /></label>
+                <label>Status: <input type="text" bind:value={FilterParams.status} oninput={applyFilters} /></label>
 <!--                <label>Status:-->
 <!--                    <select bind:value={filterStatus} onchange={applyFilters}>-->
 <!--                        <option value="">All</option>-->
@@ -112,7 +89,7 @@
 <!--                </label>-->
 
                 <label>Review Status:
-                    <select bind:value={filterReviewStatus} onchange={applyFilters}>
+                    <select bind:value={FilterParams.reviewStatus} onchange={applyFilters}>
                         <option value="">All</option>
                         <option value="approved">Approved</option>
                         <option value="needs review">Needs Review</option>
@@ -120,8 +97,8 @@
                     </select>
                 </label>
 
-                <label>From: <input type="date" bind:value={filterFromDate} onchange={applyFilters} /></label>
-                <label>To: <input type="date" bind:value={filterToDate} onchange={applyFilters} /></label>
+                <label>From: <input type="date" bind:value={FilterParams.from} onchange={applyFilters} /></label>
+                <label>To: <input type="date" bind:value={FilterParams.to} onchange={applyFilters} /></label>
             </div>
         {/if}
     </aside>
@@ -143,9 +120,9 @@
 
         <!-- Pagination Controls -->
         <div class="pagination">
-            <button onclick={prevPage} disabled={page === 1}>Previous</button>
-            <span>Page {page} of {totalPages}</span>
-            <button onclick={nextPage} disabled={page === totalPages}>Next</button>
+            <button onclick={prevPage} disabled={FilterParams.page === 1}>Previous</button>
+            <span>Page {FilterParams.page} of {totalPages}</span>
+            <button onclick={nextPage} disabled={FilterParams.page === totalPages}>Next</button>
         </div>
     </section>
 
