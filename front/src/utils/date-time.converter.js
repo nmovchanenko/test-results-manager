@@ -31,3 +31,8 @@ export const toCleanTitle = (title) => {
 
     return title.split(' ').filter(v => !isTestKey(v) && !isTag(v)).join(' ');
 }
+
+export const getDaysDiff = (from, to) => {
+    const MS_IN_DAY = 86_400_000;// number of milliseconds in a day
+    return (to - from) / MS_IN_DAY;
+};
