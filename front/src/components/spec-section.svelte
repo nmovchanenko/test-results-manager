@@ -17,7 +17,7 @@
             datesList.push(day);
         }
 
-        return datesList.map((date, index) => {
+        const result = $state(datesList.map((date, index) => {
             return {
                 date,
                 isActive: index === 0, // the latest is active by default
@@ -27,15 +27,17 @@
                     month: 'short'
                 }).format(date)
             };
-        });
+        }));
+
+        return result;
     });
-    let selectedDates = $derived(dateFilters.filter(d => d.isActive));
     let executions = $derived.by(() => {
         return Object.values(specResults.executions).reduce((acc, data) => {
             const filteredResults = data.results.filter(result => {
                 const [yyyy_mm_dd] = result.startTime.split('T');
 
-                return selectedDates
+                return dateFilters
+                    .filter(d => d.isActive)
                     .some((date) => date.yyyy_mm_dd === yyyy_mm_dd);
             });
 
@@ -49,6 +51,11 @@
             return acc;
         }, []);
     });
+
+    function toggleActive(day) {
+        day.isActive = !day.isActive;
+        console.log(day);
+    }
 </script>
 
 
@@ -56,7 +63,7 @@
 <!--    <pre>{JSON.stringify(Object.values(specResults.executions), null, 4)}</pre>-->
     <div class="row">
         {#each dateFilters as day}
-            <button class="card col">{day.display}</button>
+            <button class="card col button outline {day.isActive ? 'primary' : 'secondary'}" onclick={() => toggleActive(day)}>{day.display}</button>
         {/each}
     </div>
 
