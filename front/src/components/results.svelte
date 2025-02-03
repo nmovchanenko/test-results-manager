@@ -29,8 +29,6 @@
         return Object.values(groupBySpecs(filteredResults));
     });
 
-    let selectedDateRange = [new Date('2025-01-14T06:06:48.643Z'), new Date('2025-01-15T07:04:04.662Z'), new Date('2025-01-16T07:04:04.662Z')];
-
     const sidebarWidth = tweened(300, { duration: 100, easing: cubicOut });
 
     let totalPages = 1;
@@ -107,7 +105,7 @@
             {#if filteredResultList.length > 0}
                 {#each filteredResultList as result}
                     <div class="result-card">
-                        <SpecSection specResults={result} dateRange={selectedDateRange}/>
+                        <SpecSection specResults={result}/>
                     </div>
                 {/each}
             {:else}
@@ -162,7 +160,6 @@
     label {
         display: block;
         margin-bottom: 10px;
-        font-size: 14px;
     }
 
     input, select {

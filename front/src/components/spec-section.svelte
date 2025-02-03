@@ -3,37 +3,60 @@
     import {FilterParams} from '../stores/resultFilters.svelte.js';
     import {toStartTime, toDuration, toCleanTitle, getDaysDiff} from '../utils/date-time.converter.js';
 
-    let {specResults, dateRange} = $props();
+    let {specResults} = $props();
     let spec = $derived(specResults.spec);
-    let executions = $derived(specResults.executions);
-    let dateNames = $derived.by(() => {
+    let dateFilters = $derived.by(() => {
         const from = new Date(FilterParams.from);
         const to = new Date(FilterParams.to);
         const diff = getDaysDiff(from, to);
         const datesList = [to];
 
-        for (let i = 1; i < diff; i++) {
+        for (let i = 1; i <= diff; i++) {
             const day = new Date();
             day.setDate(to.getDate() - i);
             datesList.push(day);
         }
 
-        return datesList.map(date => ({
-            date,
-            display: new Intl.DateTimeFormat('en-US', {
-                day: '2-digit',
-                month: 'short'
-            }).format(date)
-        }));
+        return datesList.map((date, index) => {
+            return {
+                date,
+                isActive: index === 0, // the latest is active by default
+                yyyy_mm_dd: date.toISOString().split('T')[0],
+                display: new Intl.DateTimeFormat('en-US', {
+                    day: '2-digit',
+                    month: 'short'
+                }).format(date)
+            };
+        });
+    });
+    let selectedDates = $derived(dateFilters.filter(d => d.isActive));
+    let executions = $derived.by(() => {
+        return Object.values(specResults.executions).reduce((acc, data) => {
+            const filteredResults = data.results.filter(result => {
+                const [yyyy_mm_dd] = result.startTime.split('T');
+
+                return selectedDates
+                    .some((date) => date.yyyy_mm_dd === yyyy_mm_dd);
+            });
+
+            if (filteredResults.length) {
+                acc.push({
+                    execution: data.execution,
+                    results: filteredResults
+                });
+            }
+
+            return acc;
+        }, []);
     });
 </script>
 
 
 <div>
-<!--    <pre>{JSON.stringify(specResults, null, 4)}</pre>-->
+<!--    <pre>{JSON.stringify(Object.values(specResults.executions), null, 4)}</pre>-->
     <div class="row">
-        {#each dateNames as day}
-            <div class="card col">{day.display}</div>
+        {#each dateFilters as day}
+            <button class="card col">{day.display}</button>
         {/each}
     </div>
 
@@ -71,7 +94,7 @@
         </div>
     </div>
 
-    {#each Object.values(executions) as executionGroup}
+    {#each executions as executionGroup}
         <div class="card">
             <div class="row execution-info">
                 <p class="col-1">{executionGroup.execution.environment}</p>

@@ -19,6 +19,9 @@ router.get('/results', async (req, res) => {
         limit = 1000,
     } = req.query;
 
+    const toDate = new Date(to);
+    toDate.setDate(toDate.getDate() + 1); // +1 day to include results of the whole day
+
     try {
         const results = await dbClient.result.findMany({
             where: {
@@ -26,7 +29,7 @@ router.get('/results', async (req, res) => {
                     id: specId ? Number(specId) : undefined,
                     file: specFile ? { contains: specFile } : undefined,
                     title: specName ? { contains: specName } : undefined,
-                    tags: tag ? { array_contains: tag } : undefined,  // Assuming tags are stored as JSON array
+                    tags: tag ? { array_contains: tag } : undefined,
                 },
                 execution: {
                     environment: environment || undefined,
@@ -36,13 +39,13 @@ router.get('/results', async (req, res) => {
                 reviewStatus: reviewStatus || undefined,
                 startTime: {
                     gte: from ? new Date(from) : undefined,
-                    lte: to ? new Date(to) : undefined,
+                    lte: to ? toDate : undefined,
                 },
             },
             skip: (page - 1) * limit,
             take: Number(limit),
             // orderBy: { startTime: 'asc' },
-            include: { spec: true, execution: true, issue: true },  // Include related data
+            include: { spec: true, execution: true, issue: true },
         });
 
         const totalResults = await dbClient.result.count({
