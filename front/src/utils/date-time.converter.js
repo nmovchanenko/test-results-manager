@@ -24,3 +24,10 @@ export const toDuration = (duration) => {
 
     return `${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
 }
+
+export const toCleanTitle = (title) => {
+    const isTestKey = (v) => /<\D.+>/.test(v);
+    const isTag = (v) => v.startsWith('@');
+
+    return title.split(' ').filter(v => !isTestKey(v) && !isTag(v)).join(' ');
+}

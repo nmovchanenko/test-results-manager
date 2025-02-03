@@ -1,6 +1,6 @@
 <script>
     import InlineIssue from './inline-issue.svelte';
-    import {toStartTime, toDuration} from '../utils/date-time.converter.js';
+    import {toStartTime, toDuration, toCleanTitle} from '../utils/date-time.converter.js';
 
     let {specResults, dateRange} = $props();
     let spec = $derived(specResults.spec);
@@ -26,16 +26,35 @@
     </div>
 
     <div class="row">
-        <p class="col">{spec.key}</p>
+        <p class="col-small">{spec.key}</p>
         <p class="col">{spec.file}</p>
-        <p class="col">{spec.tags.join(' ')}</p>
+
+        <div class="row">
+            {#each spec.tags as tag}
+                <p class="col">
+                    <img src="https://icongr.am/clarity/tag.svg?size=10&color=currentColor" alt="tag icon" class="icon">
+                    {tag}
+                </p>
+            {/each}
+        </div>
     </div>
 
     <div class="row">
-        <p class="col">{spec.title}</p>
-        {#if spec.annotations.length}
-            <p class="col">{JSON.stringify(spec.annotations, null, 4)}</p>
+        {#if spec.annotations?.length}
+            {#each spec.annotations as annotation}
+                {#if annotation.type === 'issue'}
+                    <a href="{annotation.description}" target="_blank">
+                        <img src="https://icongr.am/clarity/link.svg?size=10&color=currentColor" alt="link icon" class="icon">
+                        Jira Issue
+                    </a>
+                {/if}
+            {/each}
         {/if}
+
+        <p class="col">
+            <img src="https://icongr.am/clarity/avatar.svg?size=10&color=currentColor" alt="avatar icon" class="icon">
+            {toCleanTitle(spec.title)}
+        </p>
     </div>
 
     {#each Object.values(executions) as executionGroup}
