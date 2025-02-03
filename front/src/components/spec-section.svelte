@@ -32,29 +32,30 @@
         return result;
     });
     let executions = $derived.by(() => {
-        return Object.values(specResults.executions).reduce((acc, data) => {
-            const filteredResults = data.results.filter(result => {
-                const [yyyy_mm_dd] = result.startTime.split('T');
+        return Object.values(specResults.executions)
+            .reduce((acc, data) => {
+                const filteredResults = data.results.filter(result => {
+                    const [yyyy_mm_dd] = result.startTime.split('T');
 
-                return dateFilters
-                    .filter(d => d.isActive)
-                    .some((date) => date.yyyy_mm_dd === yyyy_mm_dd);
-            });
-
-            if (filteredResults.length) {
-                acc.push({
-                    execution: data.execution,
-                    results: filteredResults
+                    return dateFilters
+                        .filter(d => d.isActive)
+                        .some((date) => date.yyyy_mm_dd === yyyy_mm_dd);
                 });
-            }
 
-            return acc;
-        }, []);
+                if (filteredResults.length) {
+                    acc.push({
+                        execution: data.execution,
+                        results: filteredResults
+                    });
+                }
+
+                return acc;
+            }, [])
+            .toSorted((a, b) => new Date(b.results[0].startTime).getTime() - new Date(a.results[0].startTime).getTime());
     });
 
     function toggleActive(day) {
         day.isActive = !day.isActive;
-        console.log(day);
     }
 </script>
 
