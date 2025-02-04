@@ -1,6 +1,7 @@
 <script>
     import InlineIssue from './inline-issue.svelte';
     import {FilterParams} from '../stores/resultFilters.svelte.js';
+    import DateToggle from './date-toggle.svelte';
     import {toStartTime, toDuration, toCleanTitle, getDaysDiff} from '../utils/date-time.converter.js';
 
     let {specResults} = $props();
@@ -64,7 +65,8 @@
 <!--    <pre>{JSON.stringify(Object.values(specResults.executions), null, 4)}</pre>-->
     <div class="row">
         {#each dateFilters as day}
-            <button class="card col button outline {day.isActive ? 'primary' : 'secondary'}" onclick={() => toggleActive(day)}>{day.display}</button>
+            <DateToggle {day} toggleHandler={toggleActive}/>
+<!--            <button class="card col button outline {day.isActive ? 'primary' : 'secondary'}" onclick={() => toggleActive(day)}>{day.display}</button>-->
         {/each}
     </div>
 
