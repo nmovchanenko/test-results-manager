@@ -1,7 +1,6 @@
 <script>
     let {day, toggleHandler} = $props();
-    let stats = ['failed', 'failed', 'failed' ];
-
+    let stats = $derived(day.stats);
 
 </script>
 
@@ -33,11 +32,5 @@
     .indicator:last-child {
         border-bottom-left-radius: 4px;
         border-bottom-right-radius: 4px;
-    }
-    .failed {
-        background: #d30f0f;
-    }
-    .passed {
-        background: #0c8a0c;
     }
 </style>

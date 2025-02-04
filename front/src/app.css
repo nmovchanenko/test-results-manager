@@ -1,4 +1,17 @@
 
+.failed {
+    background-color: #d30f0f;
+}
+.passed {
+    background-color: #0c8a0c;
+}
+.skipped {
+    background-color: #9f9797;
+}
+.timedOut {
+    background-color: #dfc60c;
+}
+
 /*
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;

@@ -19,10 +19,24 @@
         }
 
         const result = $state(datesList.map((date, index) => {
+            const yyyy_mm_dd = date.toISOString().split('T')[0];
+
+            const stats = Object.values(specResults.executions).reduce((acc, execution) => {
+                execution.results.forEach(result => {
+                    const [startTime] = result.startTime.split('T');
+                    if (startTime === yyyy_mm_dd) {
+                        acc.push(result.status);
+                    }
+                });
+
+                return acc;
+            }, []);
+
             return {
                 date,
+                yyyy_mm_dd,
+                stats,
                 isActive: index === 0, // the latest is active by default
-                yyyy_mm_dd: date.toISOString().split('T')[0],
                 display: new Intl.DateTimeFormat('en-US', {
                     day: '2-digit',
                     month: 'short'
@@ -57,6 +71,7 @@
 
     function toggleActive(day) {
         day.isActive = !day.isActive;
+        console.log(day);
     }
 </script>
 
@@ -66,7 +81,6 @@
     <div class="row">
         {#each dateFilters as day}
             <DateToggle {day} toggleHandler={toggleActive}/>
-<!--            <button class="card col button outline {day.isActive ? 'primary' : 'secondary'}" onclick={() => toggleActive(day)}>{day.display}</button>-->
         {/each}
     </div>
 
@@ -156,14 +170,5 @@
     .status-box {
         width: 7px;
         border-radius: 2px;
-    }
-    .failed {
-        background-color: #d30f0f;
-    }
-    .passed {
-        background-color: #0c8a0c;
-    }
-    .skipped {
-        background-color: #9f9797;
     }
 </style>
