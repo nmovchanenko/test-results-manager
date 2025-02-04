@@ -1,16 +1,29 @@
 <script>
     let {day, toggleHandler} = $props();
-    let stats = $derived(day.stats);
+    let statMatrix = $derived.by(() => {
+        const max = 3;
+        const matrix = [];
+
+        for (let i = 0; i < day.stats.length; i += max) {
+            const chunk = day.stats.slice(i, i + max);
+            matrix.push(chunk);
+        }
+
+        return matrix;
+    });
 
 </script>
 
 <div class="day-toggle col button outline {day.isActive ? 'primary' : 'secondary'}" onclick={() => toggleHandler(day)}>
     <div>{day.display}</div>
-    <div class="indicator-container">
-        {#each stats as status}
-            <div class="indicator {status}"></div>
-        {/each}
-    </div>
+
+    {#each statMatrix as stats}
+        <div class="indicator-container">
+            {#each stats as status}
+                <div class="indicator {status}"></div>
+            {/each}
+        </div>
+    {/each}
 </div>
 
 <style>
