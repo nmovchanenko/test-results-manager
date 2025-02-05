@@ -16,7 +16,7 @@ export async function runReview(result) {
     // todo check if result exists
 
     for (const issue of knownIssues) {
-        const [issueResult] = issue.Result;
+        const [issueResult] = issue.results;
 
         if (issueResult && issueResult.errorType === result.errorType) {
             const errorSimilarity = calculateErrorSimilarity(result.errorMessage, issueResult.errorMessage);
@@ -44,7 +44,7 @@ export async function runReview(result) {
                     assumptionRecord = await dbClient.assumption.create({
                         data: {
                             issue: { connect: { id: issue.id } },  // Connect the Issue
-                            Result: { connect: { id: result.id } }, // Connect the Result
+                            result: { connect: { id: result.id } }, // Connect the Result
                             isConfirmed: false,
                             score: finalScore
                         }

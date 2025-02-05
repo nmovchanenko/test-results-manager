@@ -36,7 +36,6 @@ router.get('/results', async (req, res) => {
                     type: type || undefined,
                 },
                 status: status || undefined,
-                reviewStatus: reviewStatus || undefined,
                 startTime: {
                     gte: from ? new Date(from) : undefined,
                     lte: to ? toDate : undefined,
@@ -45,7 +44,7 @@ router.get('/results', async (req, res) => {
             skip: (page - 1) * limit,
             take: Number(limit),
             // orderBy: { startTime: 'asc' },
-            include: { spec: true, execution: true, issue: true },
+            include: { spec: true, execution: true, issue: true, errors: true },
         });
 
         const totalResults = await dbClient.result.count({
@@ -61,7 +60,6 @@ router.get('/results', async (req, res) => {
                     type: type || undefined,
                 },
                 status: status || undefined,
-                reviewStatus: reviewStatus || undefined,
                 startTime: {
                     gte: from ? new Date(from) : undefined,
                     lte: to ? new Date(to) : undefined,
@@ -70,8 +68,15 @@ router.get('/results', async (req, res) => {
         });
 
         for (const result of results) {
-            result.errorCallLog = JSON.parse(result.errorCallLog);
-            result.errorCallStack = JSON.parse(result.errorCallStack);
+            // de-serialize stacks
+            if (result.errors && result.errors.length) {
+                for (const error of result.errors) {
+                    error.callLog = JSON.parse(error.callLog);
+                    error.callStack = JSON.parse(error.callStack);
+                }
+            }
+
+            // de-serialize string arrays
             result.spec.tags = JSON.parse(result.spec.tags);
             result.spec.annotations = JSON.parse(result.spec.annotations);
         }

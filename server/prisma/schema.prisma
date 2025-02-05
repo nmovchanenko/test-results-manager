@@ -19,7 +19,7 @@ model Execution {
   environment String
   version     String // playwright version
   startedAt   DateTime
-  Result      Result[]
+  results     Result[]
 }
 
 model Spec {
@@ -31,34 +31,27 @@ model Spec {
   title       String
   tags        String
   annotations String?
-  Result      Result[]
+  results     Result[]
 }
 
 model Result {
-  id                   Int          @id @default(autoincrement())
-  createdAt            DateTime     @default(now())
-  updatedAt            DateTime     @updatedAt
-  allureLink           String?
-  retry                Int
-  status               String
-  duration             Int
-  startTime            DateTime
-  errorType            String?
-  errorMessage         String?
-  errorCallLog         String?
-  errorCallStack       String?
-  errorTestAssertion   String?
-  errorExpectedPattern String?
-  errorReceivedString  String?
-  errorLocation        String?
-  assumptions          Assumption[]
-  assumptionId         Int?
-  issue                Issue?       @relation(fields: [issueId], references: [id])
-  issueId              Int?
-  spec                 Spec         @relation(fields: [specId], references: [id])
-  specId               Int
-  execution            Execution    @relation(fields: [executionId], references: [id])
-  executionId          Int
+  id           Int           @id @default(autoincrement())
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  allureLink   String?
+  retry        Int
+  status       String
+  duration     Int
+  startTime    DateTime
+  errors       ResultError[]
+  assumptions  Assumption[]
+  assumptionId Int?
+  issue        Issue?        @relation(fields: [issueId], references: [id])
+  issueId      Int?
+  spec         Spec          @relation(fields: [specId], references: [id])
+  specId       Int
+  execution    Execution     @relation(fields: [executionId], references: [id])
+  executionId  Int
 }
 
 model Issue {
@@ -71,8 +64,8 @@ model Issue {
   portal      String?
   service     String?
   ticket      String?
-  Result      Result[]
-  Assumption  Assumption[]
+  results     Result[]
+  assumptions Assumption[]
 }
 
 model Assumption {
@@ -82,8 +75,23 @@ model Assumption {
   issue       Issue    @relation(fields: [issueId], references: [id])
   isConfirmed Boolean
   score       Float
+  result      Result?  @relation(fields: [resultId], references: [id])
+  resultId    Int?
+  issueId     Int
+}
 
-  Result   Result? @relation(fields: [resultId], references: [id])
-  resultId Int?
-  issueId  Int
+model ResultError {
+  id              Int      @id @default(autoincrement())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  type            String
+  message         String
+  callLog         String?
+  callStack       String
+  testAssertion   String?
+  expectedPattern String?
+  receivedString  String?
+  location        String
+  result          Result?  @relation(fields: [resultId], references: [id])
+  resultId        Int?
 }

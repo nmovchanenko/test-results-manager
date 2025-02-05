@@ -102,14 +102,24 @@ router.post('/json-report', async (request, response, next) => {
                     if (result.error) {
                         const parsedError = parseStackTrace(result.error);
 
-                        recordData.errorType = parsedError.type;
-                        recordData.errorMessage = parsedError.message;
-                        recordData.errorCallLog = JSON.stringify(parsedError.callLog);
-                        recordData.errorCallStack = JSON.stringify(parsedError.callStack);
-                        recordData.errorTestAssertion = parsedError.testAssertion;
-                        recordData.errorExpectedPattern = parsedError.expectedPattern;
-                        recordData.errorReceivedString = parsedError.receivedString;
-                        recordData.errorLocation = `${parsedError.location.file}:${parsedError.location.line}`;
+                        const errorRecord = await dbClient.resultError.create({
+                            data: {
+                                type: parsedError.type,
+                                message: parsedError.message,
+                                callLog: JSON.stringify(parsedError.callLog),
+                                callStack: JSON.stringify(parsedError.callStack),
+                                testAssertion: parsedError.testAssertion,
+                                expectedPattern: parsedError.expectedPattern,
+                                receivedString: parsedError.receivedString,
+                                location: parsedError.location ? `${parsedError.location.file}:${parsedError.location.line}` : ''
+                            }
+                        });
+
+                        recordData.errors = {
+                            connect: {
+                                id: errorRecord.id
+                            }
+                        };
                     }
 
                     resultRecord = await dbClient.result.create({
