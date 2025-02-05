@@ -1,7 +1,21 @@
 <script>
     import IssueSidebar from './IssueSidebar.svelte';
+    import ConfirmAssumption from './confrim-assumption.svelte';
+
     let {result} = $props();
-    let issue = $derived(result.issue);
+    let assumption = $derived.by(() => {
+        const [error] = result.errors;
+
+        if (error.assumptions && error.assumptions.length) {
+            return error.assumptions[0];
+        }
+    });
+    let isConfirmedAssumption = $derived(assumption.isConfirmed);
+    let issue = $derived.by(() => {
+        if (assumption) {
+            return assumption.issue;
+        }
+    });
     let buttonAction = $derived(issue ? 'edit-action' : 'create-action');
     let showSidebar = $state(false);
 
@@ -12,18 +26,27 @@
     function closeSidebar() {
         showSidebar = false;
     }
+
+    $effect(() => {
+        console.log(JSON.stringify(result.errors, null, 4));
+    })
 </script>
 
-{#if issue}
-    <p class="col-3">{issue.name}</p>
+{#if assumption}
+
+    {#if isConfirmedAssumption}
+        <p class="col-3">{issue.name}</p>
+    {:else}
+        <ConfirmAssumption {assumption}/>
+    {/if}
+
+{:else}
+    <button class="{buttonAction}" onclick={openSidebar}></button>
+
+    {#if showSidebar}
+        <IssueSidebar {result} closeSidebar={closeSidebar} />
+    {/if}
 {/if}
-
-<button class="{buttonAction}" onclick={openSidebar}></button>
-
-{#if showSidebar}
-    <IssueSidebar {result} closeSidebar={closeSidebar} />
-{/if}
-
 
 <style>
     .create-action {

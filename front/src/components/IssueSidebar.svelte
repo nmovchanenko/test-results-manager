@@ -1,6 +1,6 @@
 <script>
     let {result, closeSidebar} = $props();
-    let issue = $state(result.issue || { name: '', category: '', description: '' });
+    let issue = $state(result.issue || { name: '', category: '', description: '', madeBy: 'user' });
 
     async function submitIssue() {
         const issueResponse = await fetch(`http://localhost:3001/api/issues`, {

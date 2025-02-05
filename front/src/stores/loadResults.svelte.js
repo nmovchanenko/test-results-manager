@@ -13,6 +13,8 @@ export let loadResultsByDate = async () => {
     if (response.ok) {
         const {results} = await response.json();
         data = results;
+    } else {
+        console.log(await response.json());
     }
 
     return data;

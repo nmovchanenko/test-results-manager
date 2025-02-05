@@ -130,18 +130,18 @@
             {#each executionGroup.results as result}
                 <div class="row">
                     <p class="status-box {result.status}"></p>
-                    <p class="col-small">
+                    <p>
                         <img src="https://icongr.am/clarity/hashtag.svg?size=10&color=currentColor" alt="hashtag icon" class="icon">
                         {result.retry}
                     </p>
 
                     {#if result.allureLink.startsWith('http')}
-                        <a class="col-1" href={result.allureLink} target="_blank">Allure</a>
+                        <a class="col-small" href={result.allureLink} target="_blank">Allure</a>
                     {:else}
-                        <p class="col-1">No allure</p>
+                        <p class="col-small">No allure</p>
                     {/if}
 
-                    <a class="col-1" href={result.allureLink} target="_blank">DataDog</a>
+                    <a class="col-small" href={result.allureLink} target="_blank">DataDog</a>
                     <p class="col-1">{toStartTime(result.startTime)}</p>
                     <p class="col-1">{toDuration(result.duration)}</p>
 
@@ -167,10 +167,11 @@
         background: var(--bg-secondary-color);
     }
     .col-small {
-        width: 5rem;
+        width: 6rem;
     }
     .status-box {
         width: 7px;
         border-radius: 2px;
+        margin-inline: 1rem;
     }
 </style>

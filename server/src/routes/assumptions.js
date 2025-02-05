@@ -1,0 +1,41 @@
+import {Router} from 'express';
+import {dbClient} from '../../prisma/client.js';
+
+const router = Router();
+
+router.patch('/assumptions/:assumptionId', async (req, res) => {
+    const {assumptionId} = req.params;
+    const assumption = req.body;
+
+    try {
+        if (assumption.madeBy !== 'user') {
+            throw new Error('Only real user can modify assumptions');
+        }
+
+        if (assumption.isConfirmed) {
+            const updatedRecord = await dbClient.assumption.update({
+                where: {
+                    id: Number(assumptionId)
+                },
+                data: req.body
+            });
+
+            return res.status(200).json(updatedRecord);
+        }
+
+        // delete record if user confirmed assumption is wrong (isConfirmed === FALSE)
+        await dbClient.assumption.delete({
+            where: {
+                id: Number(assumptionId)
+            }
+        });
+
+        return res.status(200).json({
+            message: 'Assumption deleted successfully'
+        });
+    } catch (error) {
+        res.status(400).json({error: `Failed to update assumption, ${error.message}`});
+    }
+});
+
+export default router;
