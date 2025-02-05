@@ -145,9 +145,11 @@
                     <p class="col-1">{toStartTime(result.startTime)}</p>
                     <p class="col-1">{toDuration(result.duration)}</p>
 
-                    {#if result.errorMessage}
-                        <p class="col">{result.errorMessage}</p>
-                        <InlineIssue {result}/>
+                    {#if result.errors && result.errors.length}
+                        {#each result.errors as error}
+                            <p class="col">{error.message}</p>
+                            <InlineIssue {result}/>
+                        {/each}
                     {/if}
 
                 </div>
