@@ -12,7 +12,6 @@ router.get('/results', async (req, res) => {
         environment,
         type,
         status,
-        reviewStatus,
         from,
         to,
         page = 1,
@@ -27,9 +26,9 @@ router.get('/results', async (req, res) => {
             where: {
                 spec: {
                     id: specId ? Number(specId) : undefined,
-                    file: specFile ? { contains: specFile } : undefined,
-                    title: specName ? { contains: specName } : undefined,
-                    tags: tag ? { array_contains: tag } : undefined,
+                    file: specFile ? {contains: specFile} : undefined,
+                    title: specName ? {contains: specName} : undefined,
+                    tags: tag ? {array_contains: tag} : undefined,
                 },
                 execution: {
                     environment: environment || undefined,
@@ -44,7 +43,19 @@ router.get('/results', async (req, res) => {
             skip: (page - 1) * limit,
             take: Number(limit),
             // orderBy: { startTime: 'asc' },
-            include: { spec: true, execution: true, issue: true, errors: true },
+            include: {
+                spec: true,
+                execution: true,
+                errors: {
+                    include: {
+                        assumptions: {
+                            include: {
+                                issue: true,
+                            }
+                        },
+                    },
+                }
+            },
         });
 
         const totalResults = await dbClient.result.count({
