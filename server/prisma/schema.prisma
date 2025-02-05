@@ -35,23 +35,49 @@ model Spec {
 }
 
 model Result {
-  id           Int           @id @default(autoincrement())
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  allureLink   String?
-  retry        Int
-  status       String
-  duration     Int
-  startTime    DateTime
-  errors       ResultError[]
-  assumptions  Assumption[]
-  assumptionId Int?
-  issue        Issue?        @relation(fields: [issueId], references: [id])
-  issueId      Int?
-  spec         Spec          @relation(fields: [specId], references: [id])
-  specId       Int
-  execution    Execution     @relation(fields: [executionId], references: [id])
-  executionId  Int
+  id          Int           @id @default(autoincrement())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  allureLink  String?
+  retry       Int
+  status      String
+  duration    Int
+  startTime   DateTime
+  errors      ResultError[]
+  spec        Spec          @relation(fields: [specId], references: [id])
+  specId      Int
+  execution   Execution     @relation(fields: [executionId], references: [id])
+  executionId Int
+}
+
+model ResultError {
+  id              Int          @id @default(autoincrement())
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  type            String
+  message         String
+  callLog         String?
+  callStack       String
+  testAssertion   String?
+  expectedPattern String?
+  receivedString  String?
+  location        String
+  result          Result?      @relation(fields: [resultId], references: [id])
+  resultId        Int?
+  assumptions     Assumption[]
+}
+
+model Assumption {
+  id            Int          @id @default(autoincrement())
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  isConfirmed   Boolean
+  score         Float
+  madeBy        String
+  issue         Issue        @relation(fields: [issueId], references: [id])
+  issueId       Int
+  resultError   ResultError? @relation(fields: [resultErrorId], references: [id])
+  resultErrorId Int?
 }
 
 model Issue {
@@ -64,34 +90,5 @@ model Issue {
   portal      String?
   service     String?
   ticket      String?
-  results     Result[]
   assumptions Assumption[]
-}
-
-model Assumption {
-  id          Int      @id @default(autoincrement())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  issue       Issue    @relation(fields: [issueId], references: [id])
-  isConfirmed Boolean
-  score       Float
-  result      Result?  @relation(fields: [resultId], references: [id])
-  resultId    Int?
-  issueId     Int
-}
-
-model ResultError {
-  id              Int      @id @default(autoincrement())
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  type            String
-  message         String
-  callLog         String?
-  callStack       String
-  testAssertion   String?
-  expectedPattern String?
-  receivedString  String?
-  location        String
-  result          Result?  @relation(fields: [resultId], references: [id])
-  resultId        Int?
 }

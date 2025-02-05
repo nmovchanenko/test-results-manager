@@ -2,72 +2,113 @@ import levenshtein from 'fast-levenshtein';
 import stringSimilarity from 'string-similarity';
 import {dbClient} from '../../prisma/client.js';
 
-// import {errors} from './examples.js';
+// const resultErrors = await dbClient.resultError.findMany({
+//     where: {
+//         type: 'TimeoutError',
+//         assumptions: {
+//             some: {}, // Checks for the existence of at least one related Assumption
+//         },
+//     },
+//     include: {
+//         assumptions: true, // Include related Assumptions for context
+//         result: true,      // Optional: Include related Result if needed
+//     },
+// });
 //
-// const example = errors[1];
-// await runReview(example);
+// console.log(resultErrors.length);
 
-export async function runReview(result) {
+const res = await dbClient.resultError.findUnique({
+    where: {
+        id: 315
+    }
+});
+
+await runReview(res)
+
+export async function runReview(targetResultError) {
     const start = new Date();
-    const knownIssues = await dbClient.issue.findMany({
-        include: { Result: true },
-    });
 
-    // todo check if result exists
-
-    for (const issue of knownIssues) {
-        const [issueResult] = issue.results;
-
-        if (issueResult && issueResult.errorType === result.errorType) {
-            const errorSimilarity = calculateErrorSimilarity(result.errorMessage, issueResult.errorMessage);
-            const stackSimilarity = compareStackTraces(JSON.parse(result.errorCallStack), JSON.parse(issueResult.errorCallStack));
-
-            const ERROR_THRESHOLD = 0.85;
-            const STACK_THRESHOLD = 0.7;
-            const FINAL_SCORE_THRESHOLD = 0.8;
-
-            const finalScore = (errorSimilarity * 0.6) + (stackSimilarity * 0.4);
-
-            if (errorSimilarity >= ERROR_THRESHOLD &&
-                stackSimilarity >= STACK_THRESHOLD &&
-                finalScore >= FINAL_SCORE_THRESHOLD) {
-
-                let assumptionRecord = await dbClient.assumption.findFirst({
-                    where: {
-                        resultId: result.id
-                    }
-                });
-
-                // todo check if assumption is not a duplicate
-
-                if (!assumptionRecord) {
-                    assumptionRecord = await dbClient.assumption.create({
-                        data: {
-                            issue: { connect: { id: issue.id } },  // Connect the Issue
-                            result: { connect: { id: result.id } }, // Connect the Result
-                            isConfirmed: false,
-                            score: finalScore
-                        }
-                    });
-                }
-
-                await dbClient.result.update({
-                    where: { id: result.id },
-                    data: {
-                        assumptions: {
-                            connect: { id: assumptionRecord.id }
-                        }
-                    }
-                });
-
-                console.log(`✅ Issue ${issue.id} automatically linked to result ${result.id}, time: ${new Date() - start}`);
-                return;
-            }
-        }
-
+    if (!targetResultError.type) {
+        throw new Error('Target result error has no error type');
     }
 
-    console.log(`❌ No known issue found for result ${result.id}, time: ${new Date() - start}`);
+    const existingResultError = await dbClient.resultError.findUnique({
+        where: {
+            id: targetResultError.id
+        }
+    });
+
+    if (!existingResultError) {
+        throw new Error(`No such result error in db: #${targetResultError.id}`);
+    }
+
+    const resultErrors = await dbClient.resultError.findMany({
+        where: {
+            type: targetResultError.type,
+            assumptions: {
+                some: {},
+            },
+        },
+        include: {
+            assumptions: true,
+            result: true,
+        },
+    });
+
+    for (const resultError of resultErrors) {
+        const errorSimilarity = calculateErrorSimilarity(targetResultError.message, resultError.message);
+        const stackSimilarity = compareStackTraces(JSON.parse(targetResultError.callStack), JSON.parse(resultError.callStack));
+
+        const ERROR_THRESHOLD = 0.85;
+        const STACK_THRESHOLD = 0.7;
+        const FINAL_SCORE_THRESHOLD = 0.8;
+
+        const finalScore = (errorSimilarity * 0.6) + (stackSimilarity * 0.4);
+
+        if (errorSimilarity >= ERROR_THRESHOLD &&
+            stackSimilarity >= STACK_THRESHOLD &&
+            finalScore >= FINAL_SCORE_THRESHOLD) {
+
+            let assumptionRecord = await dbClient.assumption.findFirst({
+                where: {
+                    resultErrorId: targetResultError.id
+                }
+            });
+
+            if (!assumptionRecord) {
+                let bestAssumption = resultError.assumptions.find(a => a.isConfirmed);
+
+                if (!bestAssumption) {
+                    const sorted = resultError.assumptions.toSorted((a, b) => a.score - b.score);
+                    bestAssumption = sorted[0];
+                }
+
+                assumptionRecord = await dbClient.assumption.create({
+                    data: {
+                        isConfirmed: false,
+                        score: finalScore,
+                        madeBy: 'bot',
+                        issue: { connect: { id: bestAssumption.issueId } },
+                        resultError: { connect: { id: targetResultError.id } },
+                    }
+                });
+            }
+
+            await dbClient.resultError.update({
+                where: { id: targetResultError.id },
+                data: {
+                    assumptions: {
+                        connect: { id: assumptionRecord.id }
+                    }
+                }
+            });
+
+            console.log(`✅ Assumption ${assumptionRecord.id} automatically linked to result ${targetResultError.id}, time: ${new Date() - start}`);
+            return;
+        }
+    }
+
+    console.log(`❌ No known issue found for result ${targetResultError.id}, time: ${new Date() - start}`);
 }
 
 /**
