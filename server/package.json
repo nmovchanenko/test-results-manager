@@ -20,8 +20,10 @@
     "dotenv": "^16.4.5",
     "express": "^5.0.1",
     "express-session": "^1.18.1",
+    "fast-levenshtein": "^3.0.0",
     "log4js": "^6.9.1",
-    "nodemon": "^3.1.7"
+    "nodemon": "^3.1.7",
+    "string-similarity": "^4.0.4"
   },
   "devDependencies": {
     "prisma": "^6.3.0"
