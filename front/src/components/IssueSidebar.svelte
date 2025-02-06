@@ -1,19 +1,48 @@
 <script>
-    let {resultError, closeSidebar} = $props();
-    let issue = $state({ name: '', category: '', description: '' });
+    import Typeahead from 'svelte-typeahead';
 
-    async function submitIssue() {
-        const issueResponse = await fetch(`http://localhost:3001/api/issues`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(issue),
+    let {resultError, closeSidebar} = $props();
+    let issue = $state({
+        name: '',
+        category: '',
+        description: '',
+        portal: '',
+        service: '',
+        ticket: ''
+    });
+    let existingIssues = $state([]);
+
+    async function loadIssues() {
+        const queryParams = new URLSearchParams({
+            name: issue.name,
+            category: issue.category,
+            description: issue.description,
+            portal: issue.portal,
+            service: issue.service,
+            ticket: issue.ticket,
+            limit: 10,
         });
 
-        if (!issueResponse.ok) {
-            throw new Error(`Cant post new issue ${issueResponse.status}`);
-        }
+        const res = await fetch(`http://localhost:3001/api/issues?${queryParams}`);
+        const data = await res.json();
 
-        const issueRecord = await issueResponse.json();
+        existingIssues = data.issues;
+    }
+
+    async function submitIssue() {
+        if(!issue.id) {
+            const issueResponse = await fetch(`http://localhost:3001/api/issues`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(issue),
+            });
+
+            if (!issueResponse.ok) {
+                throw new Error(`Cant post new issue ${issueResponse.status}`);
+            }
+
+            issue = await issueResponse.json();
+        }
 
         const assumptionResponse = await fetch('http://localhost:3001/api/assumptions', {
             method: 'POST',
@@ -24,7 +53,7 @@
                 madeBy: 'user',
                 score: 1,
                 isConfirmed: true,
-                issueId: issueRecord.id,
+                issueId: issue.id,
                 resultErrorId: resultError.id
             }),
         });
@@ -41,15 +70,35 @@
             console.error('Failed to assign issue');
         }
     }
+
+    async function issueSelected(detail) {
+        const selectedIssue = detail.original;
+
+        if (selectedIssue) {
+            issue = selectedIssue;
+        }
+    }
 </script>
 
 <div class="sidebar">
     <h3>Assign Issue to Result {resultError.id}</h3>
 
     <label>
-        Name:
-        <input type="text" bind:value={issue.name} placeholder="Issue name" />
+        <Typeahead label="Issue Name"
+                   bind:value={issue.name}
+                   oninput={loadIssues}
+                   data={existingIssues}
+                   extract={(issue) => issue.name}
+                   on:select={({detail}) => issueSelected(detail)}
+                   limit={10}
+                   let:result
+                   let:index
+        >
+            <strong>{@html result.string}</strong>
+            {index}
+        </Typeahead>
     </label>
+
 
     <label>
         Category:

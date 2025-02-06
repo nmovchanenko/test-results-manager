@@ -187,7 +187,7 @@
         padding: 15px;
         border: 1px solid #ddd;
         border-radius: 5px;
-        background-color: #fafafa;
+        background-color: var(--bg-secondary-color);
     }
 
     .pagination {

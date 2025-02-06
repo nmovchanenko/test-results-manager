@@ -71,7 +71,6 @@
 
     function toggleActive(day) {
         day.isActive = !day.isActive;
-        console.log(day);
     }
 </script>
 
@@ -129,6 +128,7 @@
 
             {#each executionGroup.results as result}
                 <div class="row">
+                    <input type="checkbox">
                     <p class="status-box {result.status}"></p>
                     <p>
                         <img src="https://icongr.am/clarity/hashtag.svg?size=10&color=currentColor" alt="hashtag icon" class="icon">

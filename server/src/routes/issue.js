@@ -52,6 +52,10 @@ router.get('/issues/:issueId', async (req, res) => {
 router.post('/issues', async (req, res) => {
     const issueParams = req.body;
 
+    if (!req.body || !req.body?.name) {
+        throw new Error('Unable to create issue without name');
+    }
+
     const issueRecord = await dbClient.issue.create({
         data: issueParams
     });
