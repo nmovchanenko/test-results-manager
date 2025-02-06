@@ -29,7 +29,7 @@
         return Object.values(groupBySpecs(filteredResults));
     });
 
-    const sidebarWidth = tweened(300, { duration: 100, easing: cubicOut });
+    const sidebarWidth = tweened(250, { duration: 100, easing: cubicOut });
 
     let totalPages = 1;
 
@@ -51,7 +51,7 @@
 
     function toggleSidebar() {
         sidebarExpanded = !sidebarExpanded;
-        sidebarWidth.set(sidebarExpanded ? 300 : 0); // Collapse to 0px or expand to 300px
+        sidebarWidth.set(sidebarExpanded ? 250 : 0); // Collapse to 0px or expand to 300px
     }
 </script>
 

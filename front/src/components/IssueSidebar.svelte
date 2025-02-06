@@ -1,6 +1,6 @@
 <script>
-    let {result, closeSidebar} = $props();
-    let issue = $state(result.issue || { name: '', category: '', description: '', madeBy: 'user' });
+    let {resultError, closeSidebar} = $props();
+    let issue = $state({ name: '', category: '', description: '' });
 
     async function submitIssue() {
         const issueResponse = await fetch(`http://localhost:3001/api/issues`, {
@@ -15,13 +15,27 @@
 
         const issueRecord = await issueResponse.json();
 
-        const res = await fetch(`http://localhost:3001/api/results/${result.id}/assign-issue`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ issueId: issueRecord.id }),
+        const assumptionResponse = await fetch('http://localhost:3001/api/assumptions', {
+            method: 'POST',
+            headers: {
+                'Content-type': 'application/json'
+            },
+            body: JSON.stringify({
+                madeBy: 'user',
+                score: 1,
+                isConfirmed: true,
+                issueId: issueRecord.id,
+                resultErrorId: resultError.id
+            }),
         });
 
-        if (res.ok) {
+        if (!assumptionResponse.ok) {
+            throw new Error(`Cant post new assumption ${assumptionResponse.statusText}`)
+        }
+
+        const assumptionRecord = await assumptionResponse.json();
+
+        if (assumptionRecord) {
             closeSidebar();
         } else {
             console.error('Failed to assign issue');
@@ -30,7 +44,7 @@
 </script>
 
 <div class="sidebar">
-    <h3>Assign Issue to Result {result.id}</h3>
+    <h3>Assign Issue to Result {resultError.id}</h3>
 
     <label>
         Name:

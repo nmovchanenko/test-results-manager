@@ -116,28 +116,4 @@ router.get('/results/:resultId', async (req, res) => {
     return res.status(200).json(resultRecord);
 });
 
-router.patch('/results/:resultId/assign-issue', async (req, res) => {
-    const { resultId } = req.params;
-    const { issueId } = req.body;
-    const updateData = {};
-
-    if (issueId && Number(issueId)) {
-        updateData.issueId = Number(issueId);
-    } else {
-        updateData.issueId = null;
-    }
-
-    try {
-        const updatedResult = await dbClient.result.update({
-            where: { id: Number(resultId) },
-            data: updateData,
-            include: { issue: true }
-        });
-
-        return res.status(200).json(updatedResult);
-    } catch (error) {
-        res.status(400).json({ error: "Failed to assign issue" });
-    }
-});
-
 export default router;

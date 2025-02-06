@@ -44,7 +44,7 @@
     <button class="{buttonAction}" onclick={openSidebar}></button>
 
     {#if showSidebar}
-        <IssueSidebar {result} closeSidebar={closeSidebar} />
+        <IssueSidebar resultError={result.errors[0]} closeSidebar={closeSidebar} />
     {/if}
 {/if}
 

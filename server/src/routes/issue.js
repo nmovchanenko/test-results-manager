@@ -51,14 +51,9 @@ router.get('/issues/:issueId', async (req, res) => {
 
 router.post('/issues', async (req, res) => {
     const issueParams = req.body;
-    const issueData = {};
-
-    issueData.name = issueParams.name;
-    issueData.category = issueParams.category;
-    issueData.description = issueParams.description;
 
     const issueRecord = await dbClient.issue.create({
-        data: issueData
+        data: issueParams
     });
 
     return res.status(200).json(issueRecord);
