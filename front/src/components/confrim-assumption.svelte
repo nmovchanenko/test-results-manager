@@ -1,7 +1,7 @@
 <script>
     let {assumption} = $props();
 
-    async function confirmAssumption(assumption, isConfirmed) {
+    async function handleConfirm(isConfirmed) {
         const response = await fetch(`http://localhost:3001/api/assumptions/${assumption.id}`, {
             method: 'PATCH',
             headers: {
@@ -13,18 +13,29 @@
             })
         });
 
-        if (response.ok) {
+        if (response.status === 204) {
+            assumption = null;
+        }
+
+        if (response.status === 200) {
             assumption = await response.json();
         }
+
+        console.log(assumption);
     }
 </script>
 
-<div class="assumption">
-    <p>{assumption.score * 100}%</p>
+{#if assumption && assumption.issue}
     <p class="col">{assumption.issue.name}</p>
-    <button class="confirm-issue button icon-only" onclick={() => confirmAssumption(assumption, true)}></button>
-    <button class="reject-issue button icon-only" onclick={() => confirmAssumption(assumption, false)}></button>
-</div>
+{/if}
+
+{#if assumption && !assumption.isConfirmed}
+    <div class="assumption col">
+        <p>{assumption.score * 100}%</p>
+        <button class="confirm-issue button icon-only" onclick={() => handleConfirm(true)}></button>
+        <button class="reject-issue button icon-only" onclick={() => handleConfirm(false)}></button>
+    </div>
+{/if}
 
 <style>
     .assumption {

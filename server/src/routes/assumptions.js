@@ -17,7 +17,10 @@ router.patch('/assumptions/:assumptionId', async (req, res) => {
                 where: {
                     id: Number(assumptionId)
                 },
-                data: req.body
+                data: req.body,
+                include: {
+                    issue: true
+                }
             });
 
             return res.status(200).json(updatedRecord);
@@ -30,9 +33,7 @@ router.patch('/assumptions/:assumptionId', async (req, res) => {
             }
         });
 
-        return res.status(200).json({
-            message: 'Assumption deleted successfully'
-        });
+        return res.status(204).send();
     } catch (error) {
         res.status(400).json({error: `Failed to update assumption, ${error.message}`});
     }
