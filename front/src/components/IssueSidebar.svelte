@@ -1,7 +1,7 @@
 <script>
     import Typeahead from 'svelte-typeahead';
 
-    let {resultError, closeSidebar} = $props();
+    let {resultError, toggleSidebar} = $props();
     let issue = $state({
         name: '',
         category: '',
@@ -65,7 +65,7 @@
         const assumptionRecord = await assumptionResponse.json();
 
         if (assumptionRecord) {
-            closeSidebar();
+            toggleSidebar();
         } else {
             console.error('Failed to assign issue');
         }
@@ -116,7 +116,7 @@
     </label>
 
     <button onclick={submitIssue}>Submit</button>
-    <button onclick={() => closeSidebar()}>Cancel</button>
+    <button onclick={toggleSidebar}>Cancel</button>
 </div>
 
 <style>

@@ -8,7 +8,6 @@
     let {resultsList} = $props();
     let sidebarExpanded = $state(true);
     let filteredResultList = $derived.by(() => {
-        console.log(JSON.stringify(FilterParams, null, 4));
         const filteredResults = resultsList.filter(result => {
             const hasTag = FilterParams.tag ? result.spec.tags.map(t => t.toLowerCase()).includes(FilterParams.tag.toLowerCase()) : true;
             const hasSpecKey = FilterParams.specId ? result.spec.key.toLowerCase().includes(FilterParams.specId.toLowerCase()) : true;
@@ -25,7 +24,6 @@
             return hasTag && hasSpecKey && hasSpecFile && hasSpecName && hasEnv && hasType && hasStatus && hasReviewStatus;
         });
 
-        console.log(`filtered results: ${filteredResults.length}`);
         return Object.values(groupBySpecs(filteredResults));
     });
 
