@@ -25,7 +25,6 @@
     {#await loadResultsByDate()}
       <p>...loading</p>
     {:then results}
-      <pre>{results.length} Found</pre>
       <Results resultsList={results}/>
     {/await}
   {:else}

@@ -4,29 +4,121 @@
     import {groupBySpecs} from '../utils/group-results.js';
     import SpecSection from './spec-section.svelte';
     import {FilterParams} from '../stores/resultFilters.svelte.js';
+    import StatSection from './stat-section.svelte';
 
     let {resultsList} = $props();
     let sidebarExpanded = $state(true);
+    let focusDates = $state([
+        {
+            name: 'Today',
+            date: '2025-02-07',
+            isActive: false,
+        },
+        {
+            name: 'Yesterday',
+            date: '2025-02-06',
+            isActive: false
+        },
+        {
+            name: 'Wednesday',
+            date: '2025-02-05',
+            isActive: false
+        },
+        {
+            name: 'Tuesday',
+            date: '2025-02-04',
+            isActive: false
+        },
+        {
+            name: 'Monday',
+            date: '2025-02-03',
+            isActive: false
+        },
+        {
+            name: 'Sunday',
+            date: '2025-02-02',
+            isActive: false
+        },
+        {
+            name: 'Sat',
+            date: '2025-02-01',
+            isActive: false
+        }
+    ]);
     let filteredResultList = $derived.by(() => {
         const filteredResults = resultsList.filter(result => {
-            const hasTag = FilterParams.tag ? result.spec.tags.map(t => t.toLowerCase()).includes(FilterParams.tag.toLowerCase()) : true;
-            const hasSpecKey = FilterParams.specId ? result.spec.key.toLowerCase().includes(FilterParams.specId.toLowerCase()) : true;
-            const hasSpecFile = FilterParams.specFile ? result.spec.file.toLowerCase().includes(FilterParams.specFile.toLowerCase()) : true;
-            const hasSpecName = FilterParams.specName ? result.spec.title.toLowerCase().includes(FilterParams.specName.toLowerCase()) : true;
+            const [date] = result.startTime.split('T');
+            const isFocusDate = focusDates.find(d => {
+                if (d.date === date) {
+                    return d.isActive;
+                }
+            });
 
-            const hasEnv = FilterParams.environment ? result.execution.environment.toLowerCase() === FilterParams.environment.toLowerCase() : true;
-            const hasType = FilterParams.type ? result.execution.type.toLowerCase() === FilterParams.type.toLowerCase() : true;
+            if(isFocusDate) {
+                const hasTag = FilterParams.tag ? result.spec.tags.map(t => t.toLowerCase()).includes(FilterParams.tag.toLowerCase()) : true;
+                const hasSpecKey = FilterParams.specId ? result.spec.key.toLowerCase().includes(FilterParams.specId.toLowerCase()) : true;
+                const hasSpecFile = FilterParams.specFile ? result.spec.file.toLowerCase().includes(FilterParams.specFile.toLowerCase()) : true;
+                const hasSpecName = FilterParams.specName ? result.spec.title.toLowerCase().includes(FilterParams.specName.toLowerCase()) : true;
 
-            const reviewStatus = Boolean(result.issue) ? 'completed' : (result.status === 'passed' ? 'completed' : 'inCompleted');
-            const hasStatus = FilterParams.status ? result.status.toLowerCase() === FilterParams.status.toLowerCase() : true;
-            const hasReviewStatus = FilterParams.reviewStatus ? reviewStatus.toLowerCase() === FilterParams.reviewStatus.toLowerCase() : true;
+                const hasEnv = FilterParams.environment ? result.execution.environment.toLowerCase() === FilterParams.environment.toLowerCase() : true;
+                const hasType = FilterParams.type ? result.execution.type.toLowerCase() === FilterParams.type.toLowerCase() : true;
 
-            return hasTag && hasSpecKey && hasSpecFile && hasSpecName && hasEnv && hasType && hasStatus && hasReviewStatus;
+                const reviewStatus = Boolean(result.issue) ? 'completed' : (result.status === 'passed' ? 'completed' : 'inCompleted');
+                const hasStatus = FilterParams.status ? result.status.toLowerCase() === FilterParams.status.toLowerCase() : true;
+                const hasReviewStatus = FilterParams.reviewStatus ? reviewStatus.toLowerCase() === FilterParams.reviewStatus.toLowerCase() : true;
+
+                return hasTag && hasSpecKey && hasSpecFile && hasSpecName && hasEnv && hasType && hasStatus && hasReviewStatus;
+            }
+
+            return true;
         });
 
-        return Object.values(groupBySpecs(filteredResults));
-    });
+        return Object.values(groupBySpecs(filteredResults)).filter((group) => {
+            const hasFocus = Object.values(group.executions).some(execution => {
+                return execution.results.some(res => {
+                    const [date] = res.startTime.split('T');
+                    return focusDates.find(d => {
+                        if (d.date === date) {
+                            return d.isActive;
+                        }
+                    });
+                })
+            });
 
+            return hasFocus;
+        });
+    });
+    let focusDatesResults = $derived.by(() => {
+        const groups = [];
+        for (const specGroup of filteredResultList) {
+            const group = {
+                spec: specGroup.spec,
+                executions: []
+            };
+
+            Object.values(specGroup.executions).forEach(e => {
+                const results = e.results.filter(result => {
+                    const [date] = result.startTime.split('T');
+                    return focusDates.find(d => {
+                        if (d.date === date) {
+                            return d.isActive;
+                        }
+                    });
+                });
+
+                if (results.length) {
+                    group.executions.push({
+                        execution: e.execution,
+                        results
+                    });
+                }
+            });
+
+            groups.push(group);
+        }
+
+        return groups;
+    });
     const sidebarWidth = tweened(250, { duration: 100, easing: cubicOut });
 
     let totalPages = 1;
@@ -50,6 +142,10 @@
     function toggleSidebar() {
         sidebarExpanded = !sidebarExpanded;
         sidebarWidth.set(sidebarExpanded ? 250 : 0); // Collapse to 0px or expand to 300px
+    }
+
+    function toggleActive(day) {
+        day.isActive = !day.isActive;
     }
 </script>
 
@@ -98,6 +194,18 @@
 
     <!-- Results Content -->
     <section class="content">
+        <div class="card day-stats">
+            <div class="row">
+                {#each focusDates as day}
+                    <div class="day-toggle col button {day.isActive ? 'dark' : 'outline'}" onclick={() => toggleActive(day)}>
+                        <div>{day.name}</div>
+                    </div>
+                {/each}
+            </div>
+
+            <StatSection specGroups={focusDatesResults}/>
+        </div>
+
         <h2>Results</h2>
         <div class="results-list">
             {#if filteredResultList.length > 0}
@@ -127,6 +235,14 @@
 </div>
 
 <style>
+    .day-stats {
+        background-color: #f7f7f7;
+        margin-bottom: 2rem;
+        top: 0;
+        position: sticky;
+        z-index: 7;
+    }
+
     /* Main Container: Flex Layout */
     .main-container {
         display: flex;
@@ -171,7 +287,7 @@
     /* Content Area (Results) */
     .content {
         flex: 1;
-        padding: 20px;
+        padding: 0 20px 20px;
         overflow-y: auto;
     }
 
