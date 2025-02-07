@@ -17,7 +17,14 @@ export function parseStackTrace(error) {
         location: error.location
     };
 
-    const [type, ...rest] = error.message.split(':');
+    let [type, ...rest] = error.message.split(':');
+
+    if (!rest || !rest.length) {
+        // on timedOut status, there is no stack and error type
+        type = 'Error';
+        rest = [error.message];
+    }
+
     const [message, ...callLog] = toClearString(rest.join(':').trim()).split('\n').filter(Boolean);
 
     parsedError.type = type;

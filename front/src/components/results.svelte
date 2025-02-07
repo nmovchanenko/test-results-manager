@@ -8,7 +8,6 @@
     let {resultsList} = $props();
     let sidebarExpanded = $state(true);
     let filteredResultList = $derived.by(() => {
-        console.log(JSON.stringify(FilterParams, null, 4));
         const filteredResults = resultsList.filter(result => {
             const hasTag = FilterParams.tag ? result.spec.tags.map(t => t.toLowerCase()).includes(FilterParams.tag.toLowerCase()) : true;
             const hasSpecKey = FilterParams.specId ? result.spec.key.toLowerCase().includes(FilterParams.specId.toLowerCase()) : true;
@@ -25,11 +24,10 @@
             return hasTag && hasSpecKey && hasSpecFile && hasSpecName && hasEnv && hasType && hasStatus && hasReviewStatus;
         });
 
-        console.log(`filtered results: ${filteredResults.length}`);
         return Object.values(groupBySpecs(filteredResults));
     });
 
-    const sidebarWidth = tweened(300, { duration: 100, easing: cubicOut });
+    const sidebarWidth = tweened(250, { duration: 100, easing: cubicOut });
 
     let totalPages = 1;
 
@@ -51,7 +49,7 @@
 
     function toggleSidebar() {
         sidebarExpanded = !sidebarExpanded;
-        sidebarWidth.set(sidebarExpanded ? 300 : 0); // Collapse to 0px or expand to 300px
+        sidebarWidth.set(sidebarExpanded ? 250 : 0); // Collapse to 0px or expand to 300px
     }
 </script>
 
@@ -187,7 +185,7 @@
         padding: 15px;
         border: 1px solid #ddd;
         border-radius: 5px;
-        background-color: #fafafa;
+        background-color: var(--bg-secondary-color);
     }
 
     .pagination {

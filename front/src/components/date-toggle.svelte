@@ -14,9 +14,8 @@
 
 </script>
 
-<div class="day-toggle col button outline {day.isActive ? 'primary' : 'secondary'}" onclick={() => toggleHandler(day)}>
+<div class="day-toggle col button {day.isActive ? 'primary' : 'secondary'}" onclick={() => toggleHandler(day)}>
     <div>{day.display}</div>
-
     {#each statMatrix as stats}
         <div class="indicator-container">
             {#each stats as status}
@@ -32,6 +31,8 @@
     }
     .indicator-container {
         margin-left: auto;
+        background: #ffffff;
+        border-radius: 4px;
     }
     .indicator:first-child {
         border-top-left-radius: 4px;

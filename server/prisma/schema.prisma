@@ -13,61 +13,82 @@ datasource db {
 model Execution {
   id          Int      @id @default(autoincrement())
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   type        String
   name        String
   environment String
   version     String // playwright version
   startedAt   DateTime
-  Result      Result[]
+  results     Result[]
 }
 
 model Spec {
   id          Int      @id @default(autoincrement())
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   key         String   @unique // e.g. TestRail Id
   file        String
   title       String
   tags        String
   annotations String?
-  Result      Result[]
+  results     Result[]
 }
 
 model Result {
-  id                   Int       @id @default(autoincrement())
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @default(now())
-  allureLink           String?
-  retry                Int
-  status               String
-  duration             Int
-  startTime            DateTime
-  errorType            String?
-  errorMessage         String?
-  errorCallLog         String?
-  errorCallStack       String?
-  errorTestAssertion   String?
-  errorExpectedPattern String?
-  errorReceivedString  String?
-  errorLocation        String?
-  issue                Issue?    @relation(fields: [issueId], references: [id])
-  issueId              Int?
-  spec                 Spec      @relation(fields: [specId], references: [id])
-  specId               Int
-  execution            Execution @relation(fields: [executionId], references: [id])
-  executionId          Int
+  id          Int           @id @default(autoincrement())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  allureLink  String?
+  retry       Int
+  status      String
+  duration    Int
+  startTime   DateTime
+  errors      ResultError[]
+  spec        Spec          @relation(fields: [specId], references: [id])
+  specId      Int
+  execution   Execution     @relation(fields: [executionId], references: [id])
+  executionId Int
+}
+
+model ResultError {
+  id              Int          @id @default(autoincrement())
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  type            String
+  message         String
+  callLog         String?
+  callStack       String
+  testAssertion   String?
+  expectedPattern String?
+  receivedString  String?
+  location        String
+  result          Result?      @relation(fields: [resultId], references: [id])
+  resultId        Int?
+  assumptions     Assumption[]
+}
+
+model Assumption {
+  id            Int          @id @default(autoincrement())
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  isConfirmed   Boolean
+  score         Float
+  madeBy        String
+  issue         Issue        @relation(fields: [issueId], references: [id])
+  issueId       Int
+  resultError   ResultError? @relation(fields: [resultErrorId], references: [id])
+  resultErrorId Int?
 }
 
 model Issue {
-  id          Int      @id @default(autoincrement())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now())
+  id          Int          @id @default(autoincrement())
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   name        String
   category    String
   description String?
   portal      String?
   service     String?
   ticket      String?
-  Result      Result[]
+  assumptions Assumption[]
 }

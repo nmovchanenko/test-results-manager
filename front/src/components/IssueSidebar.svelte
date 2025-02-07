@@ -1,41 +1,104 @@
 <script>
-    let {result, closeSidebar} = $props();
-    let issue = $state(result.issue || { name: '', category: '', description: '' });
+    import Typeahead from 'svelte-typeahead';
+
+    let {resultError, toggleSidebar} = $props();
+    let issue = $state({
+        name: '',
+        category: '',
+        description: '',
+        portal: '',
+        service: '',
+        ticket: ''
+    });
+    let existingIssues = $state([]);
+
+    async function loadIssues() {
+        const queryParams = new URLSearchParams({
+            name: issue.name,
+            category: issue.category,
+            description: issue.description,
+            portal: issue.portal,
+            service: issue.service,
+            ticket: issue.ticket,
+            limit: 10,
+        });
+
+        const res = await fetch(`http://localhost:3001/api/issues?${queryParams}`);
+        const data = await res.json();
+
+        existingIssues = data.issues;
+    }
 
     async function submitIssue() {
-        const issueResponse = await fetch(`http://localhost:3001/api/issues`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(issue),
-        });
+        if(!issue.id) {
+            const issueResponse = await fetch(`http://localhost:3001/api/issues`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(issue),
+            });
 
-        if (!issueResponse.ok) {
-            throw new Error(`Cant post new issue ${issueResponse.status}`);
+            if (!issueResponse.ok) {
+                throw new Error(`Cant post new issue ${issueResponse.status}`);
+            }
+
+            issue = await issueResponse.json();
         }
 
-        const issueRecord = await issueResponse.json();
-
-        const res = await fetch(`http://localhost:3001/api/results/${result.id}/assign-issue`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ issueId: issueRecord.id }),
+        const assumptionResponse = await fetch('http://localhost:3001/api/assumptions', {
+            method: 'POST',
+            headers: {
+                'Content-type': 'application/json'
+            },
+            body: JSON.stringify({
+                madeBy: 'user',
+                score: 1,
+                isConfirmed: true,
+                issueId: issue.id,
+                resultErrorId: resultError.id
+            }),
         });
 
-        if (res.ok) {
-            closeSidebar();
+        if (!assumptionResponse.ok) {
+            throw new Error(`Cant post new assumption ${assumptionResponse.statusText}`)
+        }
+
+        const assumptionRecord = await assumptionResponse.json();
+
+        if (assumptionRecord) {
+            toggleSidebar();
         } else {
             console.error('Failed to assign issue');
+        }
+    }
+
+    async function issueSelected(detail) {
+        const selectedIssue = detail.original;
+
+        if (selectedIssue) {
+            issue = selectedIssue;
         }
     }
 </script>
 
 <div class="sidebar">
-    <h3>Assign Issue to Result {result.id}</h3>
+    <h3>Assign Issue to Result {resultError.id}</h3>
 
     <label>
-        Name:
-        <input type="text" bind:value={issue.name} placeholder="Issue name" />
+        <Typeahead label="Issue Name"
+                   bind:value={issue.name}
+                   oninput={loadIssues}
+                   data={existingIssues}
+                   extract={(issue) => issue.name}
+                   on:select={({detail}) => issueSelected(detail)}
+                   limit={10}
+                   let:result
+                   let:index
+        >
+            <strong>{@html result.string}</strong>
+            {index}
+        </Typeahead>
     </label>
+
 
     <label>
         Category:
@@ -53,7 +116,7 @@
     </label>
 
     <button onclick={submitIssue}>Submit</button>
-    <button onclick={() => closeSidebar()}>Cancel</button>
+    <button onclick={toggleSidebar}>Cancel</button>
 </div>
 
 <style>

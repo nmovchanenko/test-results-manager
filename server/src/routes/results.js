@@ -12,7 +12,6 @@ router.get('/results', async (req, res) => {
         environment,
         type,
         status,
-        reviewStatus,
         from,
         to,
         page = 1,
@@ -27,16 +26,15 @@ router.get('/results', async (req, res) => {
             where: {
                 spec: {
                     id: specId ? Number(specId) : undefined,
-                    file: specFile ? { contains: specFile } : undefined,
-                    title: specName ? { contains: specName } : undefined,
-                    tags: tag ? { array_contains: tag } : undefined,
+                    file: specFile ? {contains: specFile} : undefined,
+                    title: specName ? {contains: specName} : undefined,
+                    tags: tag ? {array_contains: tag} : undefined,
                 },
                 execution: {
                     environment: environment || undefined,
                     type: type || undefined,
                 },
                 status: status || undefined,
-                reviewStatus: reviewStatus || undefined,
                 startTime: {
                     gte: from ? new Date(from) : undefined,
                     lte: to ? toDate : undefined,
@@ -45,7 +43,19 @@ router.get('/results', async (req, res) => {
             skip: (page - 1) * limit,
             take: Number(limit),
             // orderBy: { startTime: 'asc' },
-            include: { spec: true, execution: true, issue: true },
+            include: {
+                spec: true,
+                execution: true,
+                errors: {
+                    include: {
+                        assumptions: {
+                            include: {
+                                issue: true,
+                            }
+                        },
+                    },
+                }
+            },
         });
 
         const totalResults = await dbClient.result.count({
@@ -61,7 +71,6 @@ router.get('/results', async (req, res) => {
                     type: type || undefined,
                 },
                 status: status || undefined,
-                reviewStatus: reviewStatus || undefined,
                 startTime: {
                     gte: from ? new Date(from) : undefined,
                     lte: to ? new Date(to) : undefined,
@@ -70,8 +79,15 @@ router.get('/results', async (req, res) => {
         });
 
         for (const result of results) {
-            result.errorCallLog = JSON.parse(result.errorCallLog);
-            result.errorCallStack = JSON.parse(result.errorCallStack);
+            // de-serialize stacks
+            if (result.errors && result.errors.length) {
+                for (const error of result.errors) {
+                    error.callLog = JSON.parse(error.callLog);
+                    error.callStack = JSON.parse(error.callStack);
+                }
+            }
+
+            // de-serialize string arrays
             result.spec.tags = JSON.parse(result.spec.tags);
             result.spec.annotations = JSON.parse(result.spec.annotations);
         }
@@ -98,30 +114,6 @@ router.get('/results/:resultId', async (req, res) => {
     });
 
     return res.status(200).json(resultRecord);
-});
-
-router.patch('/results/:resultId/assign-issue', async (req, res) => {
-    const { resultId } = req.params;
-    const { issueId } = req.body;
-    const updateData = {};
-
-    if (issueId && Number(issueId)) {
-        updateData.issueId = Number(issueId);
-    } else {
-        updateData.issueId = null;
-    }
-
-    try {
-        const updatedResult = await dbClient.result.update({
-            where: { id: Number(resultId) },
-            data: updateData,
-            include: { issue: true }
-        });
-
-        return res.status(200).json(updatedResult);
-    } catch (error) {
-        res.status(400).json({ error: "Failed to assign issue" });
-    }
 });
 
 export default router;
