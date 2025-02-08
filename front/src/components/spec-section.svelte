@@ -1,14 +1,13 @@
 <script>
     import InlineIssue from './inline-issue.svelte';
     import DateToggle from './date-toggle.svelte';
-    import {getDateRangeMap} from '../stores/dateRange.svelte.js';
     import {toStartTime, toDuration, toCleanTitle} from '../utils/date-time.converter.js';
 
-    let {specResults} = $props();
+    let {specResults, dateRangeMap} = $props();
     let spec = $derived(specResults.spec);
     let dateFilters = $derived.by(() => {
         const result = $state((() => {
-            return getDateRangeMap().map((focus) => {
+            return dateRangeMap.map((focus) => {
                 const stats = Object.values(specResults.executions).reduce((acc, execution) => {
                     execution.results.forEach(result => {
                         const [startTime] = result.startTime.split('T');

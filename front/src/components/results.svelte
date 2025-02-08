@@ -9,7 +9,7 @@
 
     let {resultsList} = $props();
     let sidebarExpanded = $state(true);
-    let dateRangeMap = $derived.by(getDateRangeMap);
+    let dateRangeMap = $state(getDateRangeMap());
     let filteredResultList = $derived.by(() => {
         const filteredResults = resultsList.filter(result => {
             const [date] = result.startTime.split('T');
@@ -111,7 +111,6 @@
 
     function toggleActive(day) {
         day.isActive = !day.isActive;
-        console.log(dateRangeMap);
     }
 </script>
 
@@ -177,7 +176,7 @@
             {#if filteredResultList.length > 0}
                 {#each filteredResultList as result}
                     <div class="result-card">
-                        <SpecSection specResults={result}/>
+                        <SpecSection specResults={result} {dateRangeMap}/>
                     </div>
                 {/each}
             {:else}
