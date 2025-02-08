@@ -1,48 +1,33 @@
 <script>
     import InlineIssue from './inline-issue.svelte';
-    import {FilterParams} from '../stores/resultFilters.svelte.js';
     import DateToggle from './date-toggle.svelte';
-    import {toStartTime, toDuration, toCleanTitle, getDaysDiff} from '../utils/date-time.converter.js';
+    import {toStartTime, toDuration, toCleanTitle} from '../utils/date-time.converter.js';
+    import {getDateRangeMap} from '../stores/dateRange.svelte.js';
 
     let {specResults} = $props();
     let spec = $derived(specResults.spec);
     let dateFilters = $derived.by(() => {
-        const from = new Date(FilterParams.from);
-        const to = new Date(FilterParams.to);
-        const diff = getDaysDiff(from, to);
-        const datesList = [to];
+        const result = $state((() => {
+            return getDateRangeMap().map((focus) => {
+                const stats = Object.values(specResults.executions).reduce((acc, execution) => {
+                    execution.results.forEach(result => {
+                        const [startTime] = result.startTime.split('T');
+                        if (startTime === focus.date) {
+                            acc.push(result.status);
+                        }
+                    });
 
-        for (let i = 1; i <= diff; i++) {
-            const day = new Date();
-            day.setDate(to.getDate() - i);
-            datesList.push(day);
-        }
+                    return acc;
+                }, []);
 
-        const result = $state(datesList.map((date, index) => {
-            const yyyy_mm_dd = date.toISOString().split('T')[0];
-
-            const stats = Object.values(specResults.executions).reduce((acc, execution) => {
-                execution.results.forEach(result => {
-                    const [startTime] = result.startTime.split('T');
-                    if (startTime === yyyy_mm_dd) {
-                        acc.push(result.status);
-                    }
-                });
-
-                return acc;
-            }, []);
-
-            return {
-                date,
-                yyyy_mm_dd,
-                stats,
-                isActive: index === 0, // the latest is active by default
-                display: new Intl.DateTimeFormat('en-US', {
-                    day: '2-digit',
-                    month: 'short'
-                }).format(date)
-            };
-        }));
+                return {
+                    yyyy_mm_dd: focus.date,
+                    stats,
+                    isActive: focus.isActive,
+                    display: focus.name
+                };
+            });
+        })());
 
         return result;
     });

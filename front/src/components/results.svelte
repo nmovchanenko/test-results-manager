@@ -1,54 +1,19 @@
 <script>
     import { tweened } from 'svelte/motion';
     import { cubicOut } from 'svelte/easing';
-    import {groupBySpecs} from '../utils/group-results.js';
     import SpecSection from './spec-section.svelte';
-    import {FilterParams} from '../stores/resultFilters.svelte.js';
     import StatSection from './stat-section.svelte';
+    import {groupBySpecs} from '../utils/group-results.js';
+    import {getDateRangeMap} from '../stores/dateRange.svelte.js';
+    import {FilterParams} from '../stores/resultFilters.svelte.js';
 
     let {resultsList} = $props();
     let sidebarExpanded = $state(true);
-    let focusDates = $state([
-        {
-            name: 'Today',
-            date: '2025-02-07',
-            isActive: false,
-        },
-        {
-            name: 'Yesterday',
-            date: '2025-02-06',
-            isActive: false
-        },
-        {
-            name: 'Wednesday',
-            date: '2025-02-05',
-            isActive: false
-        },
-        {
-            name: 'Tuesday',
-            date: '2025-02-04',
-            isActive: false
-        },
-        {
-            name: 'Monday',
-            date: '2025-02-03',
-            isActive: false
-        },
-        {
-            name: 'Sunday',
-            date: '2025-02-02',
-            isActive: false
-        },
-        {
-            name: 'Sat',
-            date: '2025-02-01',
-            isActive: false
-        }
-    ]);
+    let dateRangeMap = $derived.by(getDateRangeMap);
     let filteredResultList = $derived.by(() => {
         const filteredResults = resultsList.filter(result => {
             const [date] = result.startTime.split('T');
-            const isFocusDate = focusDates.find(d => {
+            const isFocusDate = dateRangeMap.find(d => {
                 if (d.date === date) {
                     return d.isActive;
                 }
@@ -77,7 +42,7 @@
             const hasFocus = Object.values(group.executions).some(execution => {
                 return execution.results.some(res => {
                     const [date] = res.startTime.split('T');
-                    return focusDates.find(d => {
+                    return dateRangeMap.find(d => {
                         if (d.date === date) {
                             return d.isActive;
                         }
@@ -99,7 +64,7 @@
             Object.values(specGroup.executions).forEach(e => {
                 const results = e.results.filter(result => {
                     const [date] = result.startTime.split('T');
-                    return focusDates.find(d => {
+                    return dateRangeMap.find(d => {
                         if (d.date === date) {
                             return d.isActive;
                         }
@@ -146,6 +111,7 @@
 
     function toggleActive(day) {
         day.isActive = !day.isActive;
+        console.log(dateRangeMap);
     }
 </script>
 
@@ -196,7 +162,7 @@
     <section class="content">
         <div class="card day-stats">
             <div class="row">
-                {#each focusDates as day}
+                {#each dateRangeMap as day}
                     <div class="day-toggle col button {day.isActive ? 'dark' : 'outline'}" onclick={() => toggleActive(day)}>
                         <div>{day.name}</div>
                     </div>
