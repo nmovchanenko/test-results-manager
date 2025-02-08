@@ -6,7 +6,8 @@
             results: 0,
             passed: 0,
             failed: 0,
-            skipped: 0
+            skipped: 0,
+            timedOut: 0
         };
 
         for (const specGroup of specGroups) {
