@@ -1,8 +1,8 @@
 <script>
     import InlineIssue from './inline-issue.svelte';
     import DateToggle from './date-toggle.svelte';
-    import {toStartTime, toDuration, toCleanTitle} from '../utils/date-time.converter.js';
     import {getDateRangeMap} from '../stores/dateRange.svelte.js';
+    import {toStartTime, toDuration, toCleanTitle} from '../utils/date-time.converter.js';
 
     let {specResults} = $props();
     let spec = $derived(specResults.spec);
