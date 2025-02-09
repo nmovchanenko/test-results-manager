@@ -200,6 +200,9 @@
 </div>
 
 <style>
+    .day-toggle {
+        padding: 1rem;
+    }
     .day-stats {
         background-color: #f7f7f7;
         margin-bottom: 2rem;

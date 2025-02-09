@@ -11,7 +11,6 @@
 
         return matrix;
     });
-
 </script>
 
 <div class="day-toggle col button {day.isActive ? 'primary' : 'secondary'}" onclick={() => toggleHandler(day)}>
@@ -28,6 +27,7 @@
 <style>
     .day-toggle {
         display: flex;
+        padding: 1rem;
     }
     .indicator-container {
         margin-left: auto;
