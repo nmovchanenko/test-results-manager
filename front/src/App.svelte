@@ -12,10 +12,10 @@
 
 <div class="tabs">
   <div class="tab {activeTab === 'results' ? 'active' : ''}" on:click={() => switchTab('results')}>
-    Test Results
+    Results
   </div>
   <div class="tab {activeTab === 'issues' ? 'active' : ''}" on:click={() => switchTab('issues')}>
-    Found Issues
+    Issues
   </div>
 </div>
 

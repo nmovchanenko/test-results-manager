@@ -1,7 +1,7 @@
 <script>
-    import InlineIssue from './inline-issue.svelte';
     import DateToggle from './date-toggle.svelte';
-    import {toStartTime, toDuration, toCleanTitle} from '../utils/date-time.converter.js';
+    import ExecutionCard from './execution-card.svelte';
+    import {toCleanTitle} from '../utils/date-time.converter.js';
 
     let {specResults, dateRangeMap} = $props();
     let spec = $derived(specResults.spec);
@@ -102,60 +102,13 @@
     </div>
 
     {#each executions as executionGroup}
-        <div class="card">
-            <div class="row execution-info">
-                <p class="col-1">{executionGroup.execution.environment}</p>
-                <p class="col-1">{executionGroup.execution.type}</p>
-                <p class="col">{executionGroup.execution.name}</p>
-                <p class="col-2">Playwright v.{executionGroup.execution.version}</p>
-            </div>
-
-            {#each executionGroup.results as result}
-                <div class="row">
-                    <input type="checkbox">
-                    <p class="status-box {result.status}"></p>
-                    <p>
-                        <img src="https://icongr.am/clarity/hashtag.svg?size=10&color=currentColor" alt="hashtag icon" class="icon">
-                        {result.retry}
-                    </p>
-
-                    {#if result.allureLink.startsWith('http')}
-                        <a class="col-small" href={result.allureLink} target="_blank">Allure</a>
-                    {:else}
-                        <p class="col-small">No allure</p>
-                    {/if}
-
-                    <a class="col-small" href={result.allureLink} target="_blank">DataDog</a>
-                    <p class="col-1">{toStartTime(result.startTime)}</p>
-                    <p class="col-1">{toDuration(result.duration)}</p>
-
-                    {#if result.errors && result.errors.length}
-                        {#each result.errors as resultError}
-                            <p class="col">{resultError.message}</p>
-                            <InlineIssue {resultError}/>
-                        {/each}
-                    {/if}
-
-                </div>
-            {/each}
-        </div>
+        <ExecutionCard group={executionGroup}/>
     {/each}
 </div>
 
 
 <style>
-    .card {
-        margin-bottom: 1rem;
-    }
-    .execution-info {
-        background: var(--bg-secondary-color);
-    }
     .col-small {
         width: 6rem;
-    }
-    .status-box {
-        width: 7px;
-        border-radius: 2px;
-        margin-inline: 1rem;
     }
 </style>
