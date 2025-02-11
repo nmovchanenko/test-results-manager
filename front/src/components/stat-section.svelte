@@ -22,51 +22,61 @@
 
         return totals;
     });
+    let errorsStat = $derived.by(() => {
+        const errorMap = {};
+
+        for (const specGroup of specGroups) {
+            for (const execution of specGroup.executions) {
+                for (const result of execution.results) {
+                    if (result.errors && result.errors.length) {
+                        for (const error of result.errors) {
+
+                            if (errorMap[error.message]) {
+                                errorMap[error.message] += 1;
+                            } else {
+                                errorMap[error.message] = 1;
+                            }
+
+                        }
+                    }
+                }
+            }
+        }
+
+        return Object.entries(errorMap).toSorted((a, b) => b[1] - a[1]);
+    });
+    let topErrors = $derived(errorsStat.slice(0, 10));
 
     function toSummary() {
         return Object.entries(stats).map(([key, value]) => `Total ${key}: ${value}`).join(' | ');
     }
+
 </script>
 
 <details>
     <summary>{toSummary()}</summary>
 
-    <table>
-        <thead>
-        <tr>
-            <th>Table Heading 1</th>
-            <th>Table Heading 2</th>
-            <th>Table Heading 3</th>
-            <th>Table Heading 4</th>
-            <th>Table Heading 5</th>
-        </tr>
-        </thead>
-        <tfoot>
-        <tr>
-            <th>Table Footer 1</th>
-            <th>Table Footer 2</th>
-            <th>Table Footer 3</th>
-            <th>Table Footer 4</th>
-            <th>Table Footer 5</th>
-        </tr>
-        </tfoot>
-        <tbody>
-        <tr>
-            <td>Table Cell 1</td>
-            <td>Table Cell 2</td>
-            <td>Table Cell 3</td>
-            <td>Table Cell 4</td>
-            <td>Table Cell 5</td>
-        </tr>
-        <tr>
-            <td>Table Cell 1</td>
-            <td>Table Cell 2</td>
-            <td>Table Cell 3</td>
-            <td>Table Cell 4</td>
-            <td>Table Cell 5</td>
-        </tr>
-        </tbody>
-    </table>
+    {#if errorsStat.length}
+        <div class="top-errors">
+            <p> <b>Top {topErrors.length} errors</b> </p>
+            {#each topErrors as [error, count]}
+                <div class="error-stat">
+                    <p>{count}x</p>
+                    <p>{error}</p>
+                </div>
+            {/each}
+        </div>
+    {/if}
 </details>
 
-<!--<pre>{JSON.stringify(specGroups[0], null, 4)}</pre>-->
+<!--<pre>{JSON.stringify(countTopErrors(), null, 4)}</pre>-->
+
+<style>
+    .top-errors {
+        margin: 1rem;
+    }
+    .error-stat {
+        display: flex;
+        gap: 1rem;
+    }
+</style>
