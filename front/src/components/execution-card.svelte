@@ -4,20 +4,57 @@
 
     let {group} = $props();
     let selectAll = $state(false);
-    let resultsList = $state(group.results.map(result => ({
+    let results = $state(group.results.map(result => ({
         isSelected: false,
         ...result
     })));
+    let selectedResults = $derived(results.filter(res => res.isSelected));
 
     function toggleSelectAll() {
         selectAll = !selectAll;
-        for (const result of resultsList) {
+        for (const result of results) {
             result.isSelected = selectAll;
         }
     }
 
     function assignAll() {
-        console.log(resultsList);
+        console.log(results);
+    }
+
+    function toggleSidebar() {
+
+    }
+
+    async function runAutoReview() {
+        const errorIds = [];
+
+        for (const result of results) {
+            if(result.errors && result.errors.length) {
+                for (const error of result.errors) {
+                    errorIds.push(error.id);
+                }
+            }
+        }
+
+        const response = await fetch('http://localhost:3001/api/result-errors/bulk-review', {
+            method: 'PATCH',
+            headers: {
+                'Content-type': 'application/json'
+            },
+            body: JSON.stringify({ errorIds }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Auto review failed, ${await response.json()}`);
+        }
+    }
+
+    function hasUnreviewed(resultList) {
+        return resultList.some(({errors}) => errors.some(({assumptions}) => !assumptions.length));
+    }
+
+    function hasUnconfirmed(resultList) {
+        return resultList.some(({errors}) => errors.some(({assumptions}) => assumptions.some(({isConfirmed}) => !isConfirmed)));
     }
 </script>
 
@@ -29,12 +66,25 @@
         <p class="col">{group.execution.name}</p>
         <p class="col-2">Playwright v.{group.execution.version}</p>
 
-        {#if resultsList.filter(res => res.isSelected).length > 1}
-            <a class="button clear" onclick={assignAll}>Bulk assign</a>
+        {#if selectedResults.length > 1}
+            <div class="bulk-section">
+                <p class="bulk-title">Bulk actions</p>
+
+                {#if hasUnreviewed(selectedResults)}
+                    <button class="auto-review" onclick={() => runAutoReview()}></button>
+                {/if}
+
+                {#if hasUnconfirmed(selectedResults)}
+                    <button class="confirm-issue"></button>
+                    <button class="reject-issue"></button>
+                {/if}
+
+                <button class="create-issue" onclick={toggleSidebar}></button>
+            </div>
         {/if}
     </div>
 
-    {#each resultsList as result}
+    {#each results as result}
         <div class="row">
             <input type="checkbox" bind:checked={result.isSelected}>
             <p class="status-box {result.status}"></p>
@@ -65,6 +115,31 @@
 </div>
 
 <style>
+    button {
+        padding-inline: 1.5rem;
+    }
+    .bulk-section {
+        display: flex;
+        justify-content: flex-end;
+        border: 1px solid #6e049f;
+        border-radius: 4px;
+        background: var(--bg-color);
+    }
+    .bulk-title {
+        padding-inline: 1rem;
+    }
+    .create-issue {
+        background: url('https://icongr.am/clarity/add.svg?size=20&color=6e049f') no-repeat left center;
+    }
+    .auto-review {
+        background: url('https://icongr.am/clarity/wand.svg?size=20&color=6e049f') no-repeat left center;
+    }
+    .confirm-issue {
+        background: url('https://icongr.am/clarity/check.svg?size=17&color=03a50e') no-repeat left center;
+    }
+    .reject-issue {
+        background: url('https://icongr.am/clarity/trash.svg?size=17&color=ce1212') no-repeat left center;
+    }
     .card {
         margin-block: 1rem;
     }

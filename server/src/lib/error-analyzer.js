@@ -2,45 +2,9 @@ import levenshtein from 'fast-levenshtein';
 import stringSimilarity from 'string-similarity';
 import {dbClient} from '../../prisma/client.js';
 
-// const resultErrors = await dbClient.resultError.findMany({
-//     where: {
-//         type: 'TimeoutError',
-//         assumptions: {
-//             some: {}, // Checks for the existence of at least one related Assumption
-//         },
-//     },
-//     include: {
-//         assumptions: true, // Include related Assumptions for context
-//         result: true,      // Optional: Include related Result if needed
-//     },
-// });
-//
-// console.log(resultErrors.length);
-
-const res = await dbClient.resultError.findUnique({
-    where: {
-        id: 315
-    }
-});
-
-await runReview(res)
 
 export async function runReview(targetResultError) {
     const start = new Date();
-
-    if (!targetResultError.type) {
-        throw new Error('Target result error has no error type');
-    }
-
-    const existingResultError = await dbClient.resultError.findUnique({
-        where: {
-            id: targetResultError.id
-        }
-    });
-
-    if (!existingResultError) {
-        throw new Error(`No such result error in db: #${targetResultError.id}`);
-    }
 
     const resultErrors = await dbClient.resultError.findMany({
         where: {
@@ -57,17 +21,21 @@ export async function runReview(targetResultError) {
 
     for (const resultError of resultErrors) {
         const errorSimilarity = calculateErrorSimilarity(targetResultError.message, resultError.message);
+        const callLogSimilarity = compareStackTraces(JSON.parse(targetResultError.callLog), JSON.parse(resultError.callLog));
         const stackSimilarity = compareStackTraces(JSON.parse(targetResultError.callStack), JSON.parse(resultError.callStack));
 
         const ERROR_THRESHOLD = 0.85;
+        const CALL_LOG_THRESHOLD = 0.7;
         const STACK_THRESHOLD = 0.7;
         const FINAL_SCORE_THRESHOLD = 0.8;
 
-        const finalScore = (errorSimilarity * 0.6) + (stackSimilarity * 0.4);
+        const finalScore = (errorSimilarity * 0.4) + (callLogSimilarity * 0.3) + (stackSimilarity * 0.3);
 
-        if (errorSimilarity >= ERROR_THRESHOLD &&
-            stackSimilarity >= STACK_THRESHOLD &&
-            finalScore >= FINAL_SCORE_THRESHOLD) {
+        console.log('*********');
+        console.log(errorSimilarity, callLogSimilarity, stackSimilarity, finalScore);
+        console.log('*********');
+
+        if (finalScore >= FINAL_SCORE_THRESHOLD) {
 
             let assumptionRecord = await dbClient.assumption.findFirst({
                 where: {
@@ -94,7 +62,7 @@ export async function runReview(targetResultError) {
                 });
             }
 
-            await dbClient.resultError.update({
+            const updatedResultError = await dbClient.resultError.update({
                 where: { id: targetResultError.id },
                 data: {
                     assumptions: {
@@ -104,11 +72,12 @@ export async function runReview(targetResultError) {
             });
 
             console.log(`✅ Assumption ${assumptionRecord.id} automatically linked to result ${targetResultError.id}, time: ${new Date() - start}`);
-            return;
+            return updatedResultError;
         }
     }
 
     console.log(`❌ No known issue found for result ${targetResultError.id}, time: ${new Date() - start}`);
+    return targetResultError;
 }
 
 /**

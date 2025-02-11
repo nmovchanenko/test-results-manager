@@ -6,6 +6,7 @@ import specs from './specs.js';
 import executions from './executions.js';
 import assumptions from './assumptions.js';
 import resultErrors from './result-errors.js';
+import autoReview from './auto-review.js';
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use(specs);
 router.use(executions);
 router.use(assumptions);
 router.use(resultErrors);
+router.use(autoReview);
 
 export default router;
