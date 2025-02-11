@@ -105,8 +105,9 @@
         <select bind:value={issue.category}>
             <option value="" disabled selected>Select category</option>
             <option value="Bug">Bug</option>
-            <option value="Improvement">Improvement</option>
-            <option value="Task">Task</option>
+            <option value="Script">Script</option>
+            <option value="Infra">Infra</option>
+            <option value="Performance">Performance</option>
         </select>
     </label>
 

@@ -27,7 +27,7 @@ export async function runReview(targetResultError) {
         const ERROR_THRESHOLD = 0.85;
         const CALL_LOG_THRESHOLD = 0.7;
         const STACK_THRESHOLD = 0.7;
-        const FINAL_SCORE_THRESHOLD = 0.8;
+        const FINAL_SCORE_THRESHOLD = 0.5;
 
         const finalScore = (errorSimilarity * 0.4) + (callLogSimilarity * 0.3) + (stackSimilarity * 0.3);
 
