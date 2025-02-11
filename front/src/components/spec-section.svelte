@@ -3,12 +3,11 @@
     import ExecutionCard from './execution-card.svelte';
     import {toCleanTitle} from '../utils/date-time.converter.js';
 
-    let {specResults, dateRangeMap} = $props();
-    let spec = $derived(specResults.spec);
+    let {spec, executions, dateRangeMap} = $props();
     let dateFilters = $derived.by(() => {
         const result = $state((() => {
             return dateRangeMap.map((focus) => {
-                const stats = Object.values(specResults.executions).reduce((acc, execution) => {
+                const stats = Object.values(executions).reduce((acc, execution) => {
                     execution.results.forEach(result => {
                         const [startTime] = result.startTime.split('T');
                         if (startTime === focus.date) {
@@ -30,8 +29,8 @@
 
         return result;
     });
-    let executions = $derived.by(() => {
-        return Object.values(specResults.executions)
+    let executionsGroups = $derived.by(() => {
+        return Object.values(executions)
             .reduce((acc, data) => {
                 const filteredResults = data.results.filter(result => {
                     const [yyyy_mm_dd] = result.startTime.split('T');
@@ -101,8 +100,8 @@
         </div>
     </div>
 
-    {#each executions as executionGroup}
-        <ExecutionCard group={executionGroup}/>
+    {#each executionsGroups as {execution, results}}
+        <ExecutionCard {execution} resultList={results}/>
     {/each}
 </div>
 

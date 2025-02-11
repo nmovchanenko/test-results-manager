@@ -31,8 +31,9 @@
                 const reviewStatus = Boolean(result.issue) ? 'completed' : (result.status === 'passed' ? 'completed' : 'inCompleted');
                 const hasStatus = FilterParams.status ? result.status.toLowerCase() === FilterParams.status.toLowerCase() : true;
                 const hasReviewStatus = FilterParams.reviewStatus ? reviewStatus.toLowerCase() === FilterParams.reviewStatus.toLowerCase() : true;
+                const hasErrorMessage = FilterParams.errorMessage ? getErrorMessage(result).toLowerCase() === FilterParams.errorMessage.toLowerCase() : true;
 
-                return hasTag && hasSpecKey && hasSpecFile && hasSpecName && hasEnv && hasType && hasStatus && hasReviewStatus;
+                return hasTag && hasSpecKey && hasSpecFile && hasSpecName && hasEnv && hasType && hasStatus && hasReviewStatus && hasErrorMessage;
             }
 
             return true;
@@ -88,6 +89,14 @@
 
     let totalPages = 1;
 
+    function getErrorMessage(result) {
+        if (result && result.errors && result.errors.length) {
+            return result.errors[0].message;
+        }
+
+        return '';
+    }
+
     function applyFilters() {
         FilterParams.page = 1;
     }
@@ -119,20 +128,6 @@
     <aside class="sidebar" style="width: {$sidebarWidth}px;">
         {#if sidebarExpanded}
             <div class="filter-group">
-                <h3>Spec Filters</h3>
-                <label>Tags: <input type="text" bind:value={FilterParams.tag} oninput={applyFilters} /></label>
-                <label>Spec ID: <input type="text" bind:value={FilterParams.specId} oninput={applyFilters} /></label>
-                <label>Spec File: <input type="text" bind:value={FilterParams.specFile} oninput={applyFilters} /></label>
-                <label>Spec Name: <input type="text" bind:value={FilterParams.specName} oninput={applyFilters} /></label>
-            </div>
-
-            <div class="filter-group">
-                <h3>Execution Filters</h3>
-                <label>Environment: <input type="text" bind:value={FilterParams.environment} oninput={applyFilters} /></label>
-                <label>Type: <input type="text" bind:value={FilterParams.type} oninput={applyFilters} /></label>
-            </div>
-
-            <div class="filter-group">
                 <h3>Result Filters</h3>
                 <label>Status:
                     <select bind:value={FilterParams.status} onchange={applyFilters}>
@@ -151,8 +146,24 @@
                     </select>
                 </label>
 
+                <label>Error Message: <input type="text" bind:value={FilterParams.errorMessage} onchange={applyFilters} /></label>
+
                 <label>From: <input type="date" bind:value={FilterParams.from} onchange={applyFilters} /></label>
                 <label>To: <input type="date" bind:value={FilterParams.to} onchange={applyFilters} /></label>
+            </div>
+
+            <div class="filter-group">
+                <h3>Spec Filters</h3>
+                <label>Tags: <input type="text" bind:value={FilterParams.tag} oninput={applyFilters} /></label>
+                <label>Spec ID: <input type="text" bind:value={FilterParams.specId} oninput={applyFilters} /></label>
+                <label>Spec File: <input type="text" bind:value={FilterParams.specFile} oninput={applyFilters} /></label>
+                <label>Spec Name: <input type="text" bind:value={FilterParams.specName} oninput={applyFilters} /></label>
+            </div>
+
+            <div class="filter-group">
+                <h3>Execution Filters</h3>
+                <label>Environment: <input type="text" bind:value={FilterParams.environment} oninput={applyFilters} /></label>
+                <label>Type: <input type="text" bind:value={FilterParams.type} oninput={applyFilters} /></label>
             </div>
         {/if}
     </aside>
@@ -174,9 +185,9 @@
         <h2>Results</h2>
         <div class="results-list">
             {#if filteredResultList.length > 0}
-                {#each filteredResultList as result}
+                {#each filteredResultList as {spec, executions}}
                     <div class="result-card">
-                        <SpecSection specResults={result} {dateRangeMap}/>
+                        <SpecSection {spec} {executions} {dateRangeMap}/>
                     </div>
                 {/each}
             {:else}

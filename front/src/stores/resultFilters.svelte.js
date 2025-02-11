@@ -17,6 +17,7 @@ export let FilterParams = $state({
     type: '',
     status: 'failed',
     reviewStatus: '',
+    errorMessage: '',
     from: formatter.format(weekAgo),
     to: formatter.format(today),
     page: 1

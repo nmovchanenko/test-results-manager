@@ -2,12 +2,16 @@
     import InlineIssue from './inline-issue.svelte';
     import {toDuration, toStartTime} from '../utils/date-time.converter.js';
 
-    let {group} = $props();
+    let {execution, resultList} = $props();
     let selectAll = $state(false);
-    let results = $state(group.results.map(result => ({
-        isSelected: false,
-        ...result
-    })));
+    let results = $derived.by(() => {
+        const resultState = $state(resultList.map(result => ({
+            isSelected: false,
+            ...result
+        })));
+
+        return resultState;
+    });
     let selectedResults = $derived(results.filter(res => res.isSelected));
 
     function toggleSelectAll() {
@@ -61,10 +65,10 @@
 <div class="card">
     <div class="row execution-info">
         <input type="checkbox" onchange={toggleSelectAll}>
-        <p class="col-1">{group.execution.environment}</p>
-        <p class="col-1">{group.execution.type}</p>
-        <p class="col">{group.execution.name}</p>
-        <p class="col-2">Playwright v.{group.execution.version}</p>
+        <p class="col-1">{execution.environment}</p>
+        <p class="col-1">{execution.type}</p>
+        <p class="col">{execution.name}</p>
+        <p class="col-2">Playwright v.{execution.version}</p>
 
         {#if selectedResults.length > 1}
             <div class="bulk-section">
