@@ -1,7 +1,6 @@
 <script>
   import Issues from './components/issues.svelte';
-  import Results from './components/results.svelte';
-  import {loadResultsByDate} from './stores/loadResults.svelte.js';
+  import {resultsMap} from './state/resultLoader.svelte.js';
 
   let activeTab = $state('results');
 
@@ -21,12 +20,8 @@
 
 <div class="content">
   {#if activeTab === 'results'}
-
-    {#await loadResultsByDate()}
-      <p>...loading</p>
-    {:then results}
-      <Results resultsList={results}/>
-    {/await}
+    <pre>{resultsMap.size} results total</pre>
+<!--    <Results/>-->
   {:else}
     <Issues/>
   {/if}

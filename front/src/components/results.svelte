@@ -4,10 +4,10 @@
     import SpecSection from './spec-section.svelte';
     import StatSection from './stat-section.svelte';
     import {groupBySpecs} from '../utils/group-results.js';
-    import {getDateRangeMap} from '../stores/dateRange.svelte.js';
-    import {FilterParams} from '../stores/resultFilters.svelte.js';
+    import {getDateRangeMap} from '../state/dateRange.svelte.js';
+    import {FilterParams} from '../state/resultFilters.svelte.js';
 
-    let {resultsList} = $props();
+    let {resultsList} = {};
     let sidebarExpanded = $state(true);
     let dateRangeMap = $state(getDateRangeMap());
     let filteredResultList = $derived.by(() => {

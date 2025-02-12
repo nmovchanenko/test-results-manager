@@ -1,6 +1,6 @@
 <script>
     import { onMount } from 'svelte';
-    import { issueFilters } from '../stores/issueFilters.js';
+    import { issueFilters } from '../state/issueFilters.js';
     import { get } from 'svelte/store';
     import { tweened } from 'svelte/motion';
     import { cubicOut } from 'svelte/easing';
