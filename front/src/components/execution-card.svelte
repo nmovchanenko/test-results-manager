@@ -4,14 +4,15 @@
     import {Result} from '../lib/models.svelte.js';
 
     let {execution, resultModels} = $props();
+    let sortedResults = $derived(resultModels.toSorted((a, b) => a.result.retry - b.result.retry));
     let selectAll = $state(false);
     let selectedResults = $derived.by(() => {
-        return resultModels.filter(model => model.result.isSelected)
+        return sortedResults.filter(model => model.result.isSelected)
     });
 
     function toggleSelectAll() {
         selectAll = !selectAll;
-        for (const model of resultModels) {
+        for (const model of sortedResults) {
             model.result.isSelected = selectAll;
         }
     }
@@ -27,7 +28,7 @@
     async function runAutoReview() {
         const errorIds = [];
 
-        for (const model of resultModels) {
+        for (const model of sortedResults) {
             if(model.errors && model.errors.length) {
                 for (const error of model.errors) {
                     errorIds.push(error.id);
@@ -83,7 +84,7 @@
         {/if}
     </div>
 
-    {#each resultModels as {result, errors, assumptions}}
+    {#each sortedResults as {result, errors, assumptions}}
         <div class="row">
             <input type="checkbox" bind:checked={result.isSelected}>
             <p class="status-box {result.status}"></p>
