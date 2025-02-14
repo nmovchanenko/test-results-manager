@@ -1,5 +1,4 @@
 export class Spec {
-
     /**
      * @param {Object} spec
      */
@@ -22,6 +21,8 @@ export class Execution {
 }
 
 export class Result {
+    #isSelected = $state(false);
+
     /**
      * @param {Object} result
      */
@@ -29,7 +30,22 @@ export class Result {
         Object.entries(result).forEach(([key, value]) => {
             this[key] = value;
         });
-        this.isSelected = false;
+    }
+
+    get isSelected() {
+        return this.#isSelected;
+    }
+
+    set isSelected(value) {
+        this.#isSelected = value;
+    }
+
+    /**
+     * @return {string} start time key in YYYY-MM-DD format
+     */
+    get dateKey() {
+        const [date] = this.startTime.split('T');
+        return date;
     }
 }
 

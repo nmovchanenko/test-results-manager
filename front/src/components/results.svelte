@@ -3,99 +3,52 @@
     import { cubicOut } from 'svelte/easing';
     import SpecSection from './spec-section.svelte';
     import StatSection from './stat-section.svelte';
-    import {groupBySpecs} from '../utils/group-results.js';
+    import {toModels} from '../state/toMaps.svelte.js';
     import {getDateRangeMap} from '../state/dateRange.svelte.js';
     import {FilterParams} from '../state/resultFilters.svelte.js';
+    import {filterResults} from '../state/filteredResults.svelte.js';
 
-    let {resultsList} = {};
-    let sidebarExpanded = $state(true);
-    let dateRangeMap = $state(getDateRangeMap());
-    let filteredResultList = $derived.by(() => {
-        const filteredResults = resultsList.filter(result => {
-            const [date] = result.startTime.split('T');
-            const isFocusDate = dateRangeMap.find(d => {
-                if (d.date === date) {
-                    return d.isActive;
-                }
-            });
+    const {results} = $props();
+    const dateConfigs = $state(getDateRangeMap());
+    const resultModels = $state(toModels(results));
+    const activeDaysResults = $derived.by(() => {
+        return resultModels.filter(({result}) => {
+            const dayConfig = dateConfigs.find(config => config.date === result.dateKey);
+            return dayConfig?.isActive;
+        })
+    });
+    const filteredResults = $derived(filterResults(activeDaysResults));
+    const groups = $derived.by(() => {
+        const specMap = filteredResults.reduce((map, model) => {
+            const {spec, ...rest} = model;
 
-            if(isFocusDate) {
-                const hasTag = FilterParams.tag ? result.spec.tags.map(t => t.toLowerCase()).includes(FilterParams.tag.toLowerCase()) : true;
-                const hasSpecKey = FilterParams.specId ? result.spec.key.toLowerCase().includes(FilterParams.specId.toLowerCase()) : true;
-                const hasSpecFile = FilterParams.specFile ? result.spec.file.toLowerCase().includes(FilterParams.specFile.toLowerCase()) : true;
-                const hasSpecName = FilterParams.specName ? result.spec.title.toLowerCase().includes(FilterParams.specName.toLowerCase()) : true;
-
-                const hasEnv = FilterParams.environment ? result.execution.environment.toLowerCase() === FilterParams.environment.toLowerCase() : true;
-                const hasType = FilterParams.type ? result.execution.type.toLowerCase() === FilterParams.type.toLowerCase() : true;
-
-                const reviewStatus = Boolean(result.issue) ? 'completed' : (result.status === 'passed' ? 'completed' : 'inCompleted');
-                const hasStatus = FilterParams.status ? result.status.toLowerCase() === FilterParams.status.toLowerCase() : true;
-                const hasReviewStatus = FilterParams.reviewStatus ? reviewStatus.toLowerCase() === FilterParams.reviewStatus.toLowerCase() : true;
-                const hasErrorMessage = FilterParams.errorMessage ? getErrorMessage(result).toLowerCase() === FilterParams.errorMessage.toLowerCase() : true;
-
-                return hasTag && hasSpecKey && hasSpecFile && hasSpecName && hasEnv && hasType && hasStatus && hasReviewStatus && hasErrorMessage;
+            if (!map.has(spec)) {
+                map.set(spec, []);
             }
 
-            return true;
-        });
+            map.get(spec).push(rest);
 
-        return Object.values(groupBySpecs(filteredResults)).filter((group) => {
-            const hasFocus = Object.values(group.executions).some(execution => {
-                return execution.results.some(res => {
-                    const [date] = res.startTime.split('T');
-                    return dateRangeMap.find(d => {
-                        if (d.date === date) {
-                            return d.isActive;
-                        }
-                    });
-                })
-            });
+            return map;
+        }, new Map());
 
-            return hasFocus;
-        });
-    });
-    let focusDatesResults = $derived.by(() => {
-        const groups = [];
-        for (const specGroup of filteredResultList) {
-            const group = {
-                spec: specGroup.spec,
-                executions: []
-            };
+        for (const model of resultModels) {
+            const {spec, ...rest} = model;
 
-            Object.values(specGroup.executions).forEach(e => {
-                const results = e.results.filter(result => {
-                    const [date] = result.startTime.split('T');
-                    return dateRangeMap.find(d => {
-                        if (d.date === date) {
-                            return d.isActive;
-                        }
-                    });
-                });
+            if (specMap.has(spec)) {
+                const config = dateConfigs.find(config => config.date === rest.result.dateKey);
 
-                if (results.length) {
-                    group.executions.push({
-                        execution: e.execution,
-                        results
-                    });
+                if (!config.isActive) {
+                    specMap.get(spec).push(rest);
                 }
-            });
-
-            groups.push(group);
+            }
         }
 
-        return groups;
+        return specMap;
     });
+
+    let sidebarExpanded = $state(true);
     const sidebarWidth = tweened(250, { duration: 100, easing: cubicOut });
-
     let totalPages = 1;
-
-    function getErrorMessage(result) {
-        if (result && result.errors && result.errors.length) {
-            return result.errors[0].message;
-        }
-
-        return '';
-    }
 
     function applyFilters() {
         FilterParams.page = 1;
@@ -172,22 +125,22 @@
     <section class="content">
         <div class="card day-stats">
             <div class="row">
-                {#each dateRangeMap as day}
+                {#each dateConfigs as day}
                     <div class="day-toggle col button {day.isActive ? 'dark' : 'outline'}" onclick={() => toggleActive(day)}>
                         <div>{day.name}</div>
                     </div>
                 {/each}
             </div>
 
-            <StatSection specGroups={focusDatesResults}/>
+            <StatSection specGroups={activeDaysResults}/>
         </div>
 
         <h2>Results</h2>
         <div class="results-list">
-            {#if filteredResultList.length > 0}
-                {#each filteredResultList as {spec, executions}}
+            {#if groups.size > 0}
+                {#each groups.entries() as [spec, results]}
                     <div class="result-card">
-                        <SpecSection {spec} {executions} {dateRangeMap}/>
+                        <SpecSection {spec} {results} {dateConfigs}/>
                     </div>
                 {/each}
             {:else}

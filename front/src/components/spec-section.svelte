@@ -3,24 +3,17 @@
     import ExecutionCard from './execution-card.svelte';
     import {toCleanTitle} from '../utils/date-time.converter.js';
 
-    let {spec, executions, dateRangeMap} = $props();
+    let {spec, results, dateConfigs} = $props();
     let dateFilters = $derived.by(() => {
         const result = $state((() => {
-            return dateRangeMap.map((focus) => {
-                const stats = Object.values(executions).reduce((acc, execution) => {
-                    execution.results.forEach(result => {
-                        const [startTime] = result.startTime.split('T');
-                        if (startTime === focus.date) {
-                            acc.push(result.status);
-                        }
-                    });
-
-                    return acc;
-                }, []);
+            return dateConfigs.map((focus) => {
+                const statuses = results
+                    .filter(({result}) => result.dateKey === focus.date)
+                    .map(({result}) => result.status);
 
                 return {
                     yyyy_mm_dd: focus.date,
-                    stats,
+                    stats: statuses,
                     isActive: focus.isActive,
                     display: focus.name
                 };
@@ -29,27 +22,25 @@
 
         return result;
     });
-    let executionsGroups = $derived.by(() => {
-        return Object.values(executions)
-            .reduce((acc, data) => {
-                const filteredResults = data.results.filter(result => {
-                    const [yyyy_mm_dd] = result.startTime.split('T');
+    let executionsMap = $derived.by(() => {
+        return results
+            .toSorted((a, b) => new Date(b.result.startTime).getTime() - new Date(a.result.startTime).getTime())
+            .reduce((map, record) => {
+                const {execution, ...rest} = record;
+                const isActiveDayResult = dateFilters
+                    .filter(d => d.isActive)
+                    .some(d => d.yyyy_mm_dd === rest.result.dateKey);
 
-                    return dateFilters
-                        .filter(d => d.isActive)
-                        .some((date) => date.yyyy_mm_dd === yyyy_mm_dd);
-                });
+                if (isActiveDayResult) {
+                    if (!map.get(execution)) {
+                        map.set(execution, []);
+                    }
 
-                if (filteredResults.length) {
-                    acc.push({
-                        execution: data.execution,
-                        results: filteredResults
-                    });
+                    map.get(execution).push(rest);
                 }
 
-                return acc;
-            }, [])
-            .toSorted((a, b) => new Date(b.results[0].startTime).getTime() - new Date(a.results[0].startTime).getTime());
+                return map;
+            }, new Map());
     });
 
     function toggleActive(day) {
@@ -59,7 +50,6 @@
 
 
 <div>
-<!--    <pre>{JSON.stringify(Object.values(specResults.executions), null, 4)}</pre>-->
     <div class="row">
         {#each dateFilters as day}
             <DateToggle {day} toggleHandler={toggleActive}/>
@@ -100,8 +90,8 @@
         </div>
     </div>
 
-    {#each executionsGroups as {execution, results}}
-        <ExecutionCard {execution} resultList={results}/>
+    {#each executionsMap.entries() as [execution, resultModels]}
+        <ExecutionCard {execution} {resultModels}/>
     {/each}
 </div>
 

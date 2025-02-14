@@ -1,28 +1,23 @@
 <script>
     import InlineIssue from './inline-issue.svelte';
     import {toDuration, toStartTime} from '../utils/date-time.converter.js';
+    import {Result} from '../lib/models.svelte.js';
 
-    let {execution, resultList} = $props();
+    let {execution, resultModels} = $props();
     let selectAll = $state(false);
-    let results = $derived.by(() => {
-        const resultState = $state(resultList.map(result => ({
-            isSelected: false,
-            ...result
-        })));
-
-        return resultState;
+    let selectedResults = $derived.by(() => {
+        return resultModels.filter(model => model.result.isSelected)
     });
-    let selectedResults = $derived(results.filter(res => res.isSelected));
 
     function toggleSelectAll() {
         selectAll = !selectAll;
-        for (const result of results) {
-            result.isSelected = selectAll;
+        for (const model of resultModels) {
+            model.result.isSelected = selectAll;
         }
     }
 
     function assignAll() {
-        console.log(results);
+
     }
 
     function toggleSidebar() {
@@ -32,9 +27,9 @@
     async function runAutoReview() {
         const errorIds = [];
 
-        for (const result of results) {
-            if(result.errors && result.errors.length) {
-                for (const error of result.errors) {
+        for (const model of resultModels) {
+            if(model.errors && model.errors.length) {
+                for (const error of model.errors) {
                     errorIds.push(error.id);
                 }
             }
@@ -54,11 +49,11 @@
     }
 
     function hasUnreviewed(resultList) {
-        return resultList.some(({errors}) => errors.some(({assumptions}) => !assumptions.length));
+        return resultList.some(({assumptions}) => !assumptions.length);
     }
 
     function hasUnconfirmed(resultList) {
-        return resultList.some(({errors}) => errors.some(({assumptions}) => assumptions.some(({isConfirmed}) => !isConfirmed)));
+        return resultList.some(({assumptions}) => assumptions.some(({isConfirmed}) => !isConfirmed));
     }
 </script>
 
@@ -88,7 +83,7 @@
         {/if}
     </div>
 
-    {#each results as result}
+    {#each resultModels as {result, errors, assumptions}}
         <div class="row">
             <input type="checkbox" bind:checked={result.isSelected}>
             <p class="status-box {result.status}"></p>
@@ -107,10 +102,10 @@
             <p class="col-1">{toStartTime(result.startTime)}</p>
             <p class="col-1">{toDuration(result.duration)}</p>
 
-            {#if result.errors && result.errors.length}
-                {#each result.errors as resultError}
+            {#if errors && errors.length}
+                {#each errors as resultError}
                     <p class="col">{resultError.message}</p>
-                    <InlineIssue {resultError}/>
+                    <InlineIssue {resultError} assumptions={assumptions.filter(a => a.resultErrorId === resultError.id)}/>
                 {/each}
             {/if}
 

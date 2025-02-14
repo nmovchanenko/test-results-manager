@@ -1,25 +1,14 @@
 <script>
     import IssueSidebar from './IssueSidebar.svelte';
 
-    let {resultError} = $props();
-    let assumption = $state((() => {
-        if (resultError.assumptions && resultError.assumptions.length) {
-            return resultError.assumptions[0];
-        }
-    })());
-    let issue = $state((() => {
-        if (assumption) {
-            return assumption.issue;
-        }
-    })());
-    let buttonAction = $derived(issue ? 'edit-issue' : 'create-issue');
+    let {resultError, assumptions} = $props();
     let showSidebar = $state(false);
 
     function toggleSidebar() {
         showSidebar = !showSidebar;
     }
 
-    async function confirm(isConfirmed) {
+    async function confirm(assumption, isConfirmed) {
         const response = await fetch(`http://localhost:3001/api/assumptions/${assumption.id}`, {
             method: 'PATCH',
             headers: {
@@ -36,28 +25,30 @@
         }
 
         if (response.status === 200) {
-            assumption = await response.json();
+            await response.json();
         }
     }
 </script>
 
-<div class="assumption-row col">
-    {#if assumption && assumption.issue}
-        <p class="col">{assumption.issue.name}</p>
-    {/if}
-
-    {#if assumption && !assumption.isConfirmed}
-        <p>{Math.ceil(assumption.score) * 100}%</p>
-        <button class="confirm-issue" onclick={() => confirm(true)}></button>
-        <button class="reject-issue" onclick={() => confirm(false)}></button>
-    {:else}
-        <button class="{buttonAction}" onclick={toggleSidebar}></button>
-
-        {#if showSidebar}
-            <IssueSidebar {resultError} {toggleSidebar}/>
+{#each assumptions as assumption}
+    <div class="assumption-row col">
+        {#if assumption && assumption.issue}
+            <p class="col">{assumption.issue.name}</p>
         {/if}
-    {/if}
-</div>
+
+        {#if assumption && !assumption.isConfirmed}
+            <p>{Math.ceil(assumption.score) * 100}%</p>
+            <button class="confirm-issue" onclick={() => confirm(assumption, true)}></button>
+            <button class="reject-issue" onclick={() => confirm(assumption, false)}></button>
+        {:else}
+            <button class="{assumption.issue ? 'edit-issue' : 'create-issue'}" onclick={toggleSidebar}></button>
+
+            {#if showSidebar}
+                <IssueSidebar {resultError} {toggleSidebar}/>
+            {/if}
+        {/if}
+    </div>
+{/each}
 
 <style>
     button {
