@@ -22,6 +22,7 @@ export class Execution {
 
 export class Result {
     #isSelected = $state(false);
+    #isActive = $state(false);
 
     /**
      * @param {Object} result
@@ -37,7 +38,23 @@ export class Result {
     }
 
     set isSelected(value) {
-        this.#isSelected = value;
+        if (this.#isActive) {
+            this.#isSelected = value;
+        } else {
+            this.#isSelected = false;
+        }
+    }
+
+    get isActive() {
+        return this.#isActive;
+    }
+
+    set isActive(value) {
+        this.#isActive = value;
+
+        if (this.isSelected && !this.#isActive) {
+            this.isSelected = false;
+        }
     }
 
     /**

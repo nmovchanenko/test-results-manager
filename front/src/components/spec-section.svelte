@@ -45,6 +45,12 @@
 
     function toggleActive(day) {
         day.isActive = !day.isActive;
+
+        for (const model of results) {
+            if (model.result.dateKey === day.yyyy_mm_dd) {
+                model.result.isActive = day.isActive;
+            }
+        }
     }
 </script>
 

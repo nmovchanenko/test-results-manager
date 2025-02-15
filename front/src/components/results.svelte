@@ -3,12 +3,14 @@
     import { cubicOut } from 'svelte/easing';
     import SpecSection from './spec-section.svelte';
     import StatSection from './stat-section.svelte';
+    import BulkActions from './bulk-actions.svelte';
     import {toModels} from '../state/toMaps.svelte.js';
     import {getDateRangeMap} from '../state/dateRange.svelte.js';
     import {FilterParams} from '../state/resultFilters.svelte.js';
     import {filterResults} from '../state/filteredResults.svelte.js';
 
     const {results} = $props();
+    let selectAll = $state(false);
     const dateConfigs = $state(getDateRangeMap());
     const resultModels = $state(toModels(results));
     const activeDaysResults = $derived.by(() => {
@@ -45,6 +47,9 @@
 
         return specMap;
     });
+    let selectedResults = $derived.by(() => {
+        return Array.from(groups.values()).flat().filter(model => model.result.isSelected);
+    });
 
     let sidebarExpanded = $state(true);
     const sidebarWidth = tweened(250, { duration: 100, easing: cubicOut });
@@ -73,6 +78,18 @@
 
     function toggleActive(day) {
         day.isActive = !day.isActive;
+    }
+
+    function toggleSelectAll() {
+        selectAll = !selectAll;
+
+        for (const group of groups.values()) {
+            for (const model of group) {
+                if (model.result.isActive) {
+                    model.result.isSelected = selectAll;
+                }
+            }
+        }
     }
 </script>
 
@@ -136,6 +153,12 @@
         </div>
 
         <h2>Results</h2>
+
+        <div class="bulk-panel row">
+            <label> <input type="checkbox" onchange={toggleSelectAll}/> Select all </label>
+            <BulkActions {selectedResults}/>
+        </div>
+
         <div class="results-list">
             {#if groups.size > 0}
                 {#each groups.entries() as [spec, results]}
@@ -164,6 +187,11 @@
 </div>
 
 <style>
+    .bulk-panel {
+        border: 1px solid var(--color-lightGrey);
+        border-radius: 4px;
+        margin-block: 0.5rem;
+    }
     .day-toggle {
         padding: 1rem;
     }
