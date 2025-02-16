@@ -51,22 +51,24 @@ router.patch('/result-errors/:resultErrorId/review', async (req, res) => {
 
 router.patch('/result-errors/bulk-review', async (req, res) => {
     const {errorIds} = req.body;
+    const reviewResults = [];
 
-    for (const errorId of errorIds) {
-        const resultError = await dbClient.resultError.findUnique({
-            where: {
-                id: Number(errorId)
-            }
-        });
+    try {
+        for (const errorId of errorIds) {
+            const resultError = await dbClient.resultError.findUnique({
+                where: {
+                    id: Number(errorId)
+                }
+            });
 
-        const record = await runReview(resultError);
+            const record = await runReview(resultError);
+            reviewResults.push(record);
+        }
 
-        console.log(record);
+        return res.status(200).json(reviewResults);
+    } catch (e) {
+        throw new Error(`Unable to complete auto review for: ${errorIds.join(',')}. ${e.message}`);
     }
-
-    return res.status(200).json({
-        message: 'Success'
-    });
 });
 
 

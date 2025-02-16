@@ -37,7 +37,7 @@
         {/if}
 
         {#if assumption && !assumption.isConfirmed}
-            <p>{Math.ceil(assumption.score) * 100}%</p>
+            <p>{Math.round(assumption.score * 100)}%</p>
             <button class="confirm-issue" onclick={() => confirm(assumption, true)}></button>
             <button class="reject-issue" onclick={() => confirm(assumption, false)}></button>
         {:else}

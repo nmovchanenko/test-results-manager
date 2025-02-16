@@ -62,7 +62,7 @@ export async function runReview(targetResultError) {
                 });
             }
 
-            const updatedResultError = await dbClient.resultError.update({
+            await dbClient.resultError.update({
                 where: { id: targetResultError.id },
                 data: {
                     assumptions: {
@@ -72,12 +72,24 @@ export async function runReview(targetResultError) {
             });
 
             console.log(`✅ Assumption ${assumptionRecord.id} automatically linked to result ${targetResultError.id}, time: ${new Date() - start}`);
-            return updatedResultError;
+        } else {
+            console.log(`❌ No known issue found for result ${targetResultError.id}, time: ${new Date() - start}`);
         }
     }
 
-    console.log(`❌ No known issue found for result ${targetResultError.id}, time: ${new Date() - start}`);
-    return targetResultError;
+    return dbClient.resultError.findUnique({
+        where: {
+            id: targetResultError.id
+        },
+        include: {
+            result: true,
+            assumptions: {
+                include: {
+                    issue: true,
+                }
+            },
+        }
+    });
 }
 
 /**

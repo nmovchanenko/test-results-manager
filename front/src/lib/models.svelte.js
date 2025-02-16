@@ -78,10 +78,24 @@ export class ResultError {
 }
 
 export class Assumption {
+    #isConfirmed = $state();
+
     constructor(assumption) {
         Object.entries(assumption).forEach(([key, value]) => {
             this[key] = value;
+
+            if (key === 'isConfirmed') {
+                this.#isConfirmed = value;
+            }
         });
+    }
+
+    get isConfirmed() {
+        return this.#isConfirmed;
+    }
+
+    set isConfirmed(value) {
+        this.#isConfirmed = value;
     }
 }
 
