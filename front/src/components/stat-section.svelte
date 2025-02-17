@@ -1,5 +1,5 @@
 <script>
-    const MAX_MESSAGE_LENGTH = 50;
+    const MAX_MESSAGE_LENGTH = 100;
 
     let {specGroups} = $props();
     let stats = $derived.by(() => {
