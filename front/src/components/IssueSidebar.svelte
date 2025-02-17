@@ -1,7 +1,7 @@
 <script>
     import Typeahead from 'svelte-typeahead';
 
-    let {resultError, toggleSidebar} = $props();
+    let {resultError, toggleSidebar, createAssumption} = $props();
     let issue = $state({
         name: '',
         category: '',
@@ -27,48 +27,6 @@
         const data = await res.json();
 
         existingIssues = data.issues;
-    }
-
-    async function submitIssue() {
-        if(!issue.id) {
-            const issueResponse = await fetch(`http://localhost:3001/api/issues`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(issue),
-            });
-
-            if (!issueResponse.ok) {
-                throw new Error(`Cant post new issue ${issueResponse.status}`);
-            }
-
-            issue = await issueResponse.json();
-        }
-
-        const assumptionResponse = await fetch('http://localhost:3001/api/assumptions', {
-            method: 'POST',
-            headers: {
-                'Content-type': 'application/json'
-            },
-            body: JSON.stringify({
-                madeBy: 'user',
-                score: 1,
-                isConfirmed: true,
-                issueId: issue.id,
-                resultErrorId: resultError.id
-            }),
-        });
-
-        if (!assumptionResponse.ok) {
-            throw new Error(`Cant post new assumption ${assumptionResponse.statusText}`)
-        }
-
-        const assumptionRecord = await assumptionResponse.json();
-
-        if (assumptionRecord) {
-            toggleSidebar();
-        } else {
-            console.error('Failed to assign issue');
-        }
     }
 
     async function issueSelected(detail) {
@@ -116,7 +74,7 @@
         <input type="text" bind:value={issue.description} placeholder="Issue description" />
     </label>
 
-    <button onclick={submitIssue}>Submit</button>
+    <button onclick={() => createAssumption(issue)}>Submit</button>
     <button onclick={toggleSidebar}>Cancel</button>
 </div>
 

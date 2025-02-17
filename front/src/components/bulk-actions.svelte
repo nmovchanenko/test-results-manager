@@ -20,7 +20,11 @@
     }
 
     function toggleSidebar() {
-        console.log(unreviewedResults);
+        for (const unreviewedResult of unreviewedResults) {
+            for (const error of unreviewedResult.errors) {
+                console.log(error.message);
+            }
+        }
     }
 
     async function runAutoReview() {
@@ -120,15 +124,15 @@
                     })}
             ></button>
 
-            <button
-                    aria-label="aria label"
-                    class="create-issue"
-                    onclick={toggleSidebar}
-                    use:tooltip={() => ({
-                        content: `Assign issue manually to ${unreviewedCount} results`,
-                        arrow: true,
-                    })}
-            ></button>
+<!--            <button-->
+<!--                    aria-label="aria label"-->
+<!--                    class="create-issue"-->
+<!--                    onclick={toggleSidebar}-->
+<!--                    use:tooltip={() => ({-->
+<!--                        content: `Assign issue manually to ${unreviewedCount} results`,-->
+<!--                        arrow: true,-->
+<!--                    })}-->
+<!--            ></button>-->
         {/if}
 
         {#if unconfirmedCount}

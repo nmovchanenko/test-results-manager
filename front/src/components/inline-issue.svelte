@@ -1,5 +1,6 @@
 <script>
     import IssueSidebar from './IssueSidebar.svelte';
+    import {Assumption, Issue} from '../lib/models.svelte.js';
 
     let {resultError, assumptions} = $props();
     let showSidebar = $state(false);
@@ -28,27 +29,78 @@
             await response.json();
         }
     }
+
+    async function createAssumption(issue) {
+        if (!issue) {
+            throw new Error('Unable to create assumption with no linked issue');
+        }
+
+        if(!issue.id) {
+            const issueResponse = await fetch(`http://localhost:3001/api/issues`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(issue),
+            });
+
+            if (!issueResponse.ok) {
+                throw new Error(`Cant post new issue ${issueResponse.status}`);
+            }
+
+            issue = await issueResponse.json();
+        }
+
+        const assumptionResponse = await fetch('http://localhost:3001/api/assumptions', {
+            method: 'POST',
+            headers: {
+                'Content-type': 'application/json'
+            },
+            body: JSON.stringify({
+                madeBy: 'user',
+                score: 1,
+                isConfirmed: true,
+                issueId: issue.id,
+                resultErrorId: resultError.id
+            }),
+        });
+
+        if (!assumptionResponse.ok) {
+            throw new Error(`Cant post new assumption ${assumptionResponse.statusText}`)
+        }
+
+        const assumptionRecord = await assumptionResponse.json();
+
+        if (assumptionRecord) {
+            assumptionRecord.issue = new Issue(issue);
+            assumptions.push(new Assumption(assumptionRecord));
+            toggleSidebar();
+        } else {
+            console.error('Failed to assign issue');
+        }
+    }
 </script>
 
-{#each assumptions as assumption}
-    <div class="assumption-row col">
-        {#if assumption && assumption.issue}
-            <p class="col">{assumption.issue.name}</p>
-        {/if}
-
-        {#if assumption && !assumption.isConfirmed}
-            <p>{Math.round(assumption.score * 100)}%</p>
-            <button class="confirm-issue" onclick={() => confirm(assumption, true)}></button>
-            <button class="reject-issue" onclick={() => confirm(assumption, false)}></button>
-        {:else}
-            <button class="{assumption.issue ? 'edit-issue' : 'create-issue'}" onclick={toggleSidebar}></button>
-
-            {#if showSidebar}
-                <IssueSidebar {resultError} {toggleSidebar}/>
+{#if assumptions && assumptions.length}
+    {#each assumptions as assumption}
+        <div class="assumption-row col">
+            {#if assumption && assumption.issue}
+                <p class="col">{assumption.issue.name}</p>
             {/if}
-        {/if}
-    </div>
-{/each}
+
+            {#if assumption && !assumption.isConfirmed}
+                <p>{Math.round(assumption.score * 100)}%</p>
+                <button class="confirm-issue" onclick={() => confirm(assumption, true)}></button>
+                <button class="reject-issue" onclick={() => confirm(assumption, false)}></button>
+            {:else}
+                <button class="edit-issue" onclick={toggleSidebar}></button>
+            {/if}
+        </div>
+    {/each}
+{:else}
+    <button class="create-issue" onclick={toggleSidebar}></button>
+    {#if showSidebar}
+        <IssueSidebar {resultError} {toggleSidebar} {createAssumption}/>
+    {/if}
+{/if}
 
 <style>
     button {

@@ -1,4 +1,6 @@
 <script>
+    const MAX_MESSAGE_LENGTH = 50;
+
     let {specGroups} = $props();
     let stats = $derived.by(() => {
         const specMap = new Map();
@@ -55,18 +57,18 @@
 
                     if (!issueMap.has(issue.id)) {
                         issueMap.set(issue.id, issue);
+                    }
 
-                        if (!totals.byIssueNames[issue.name]) {
-                            totals.byIssueNames[issue.name] = 1;
-                        } else {
-                            totals.byIssueNames[issue.name] += 1;
-                        }
+                    if (!totals.byIssueNames[issue.name]) {
+                        totals.byIssueNames[issue.name] = 1;
+                    } else {
+                        totals.byIssueNames[issue.name] += 1;
+                    }
 
-                        if (!totals.byIssueCategories[issue.category]) {
-                            totals.byIssueCategories[issue.category] = 1;
-                        } else {
-                            totals.byIssueCategories[issue.category] += 1;
-                        }
+                    if (!totals.byIssueCategories[issue.category]) {
+                        totals.byIssueCategories[issue.category] = 1;
+                    } else {
+                        totals.byIssueCategories[issue.category] += 1;
                     }
                 }
             }
@@ -100,6 +102,11 @@
             .toSorted((a, b) => b[1] - a[1])
             .slice(0, 10);
     });
+    let topIssues = $derived.by(() => {
+        return Object.entries(stats.byIssueNames)
+            .toSorted((a, b) => b[1] - a[1])
+            .slice(0, 10);
+    })
 
     function toSummary() {
         return Object.entries(stats.byStatus).map(([key, value]) => `Total ${key}: ${value}`).join(' | ');
@@ -119,29 +126,53 @@
         <p>Assumptions: {stats.byModels.assumptions}</p>
     </div>
 
-    {#if topErrors.length}
-        <div class="top-errors">
-            <p> <b>Top {topErrors.length} errors</b> </p>
-            {#each topErrors as [error, count]}
-                <div class="error-stat">
-                    <p>{count}x</p>
-                    <p>{error}</p>
-                </div>
-            {/each}
-        </div>
-    {/if}
+    <div class="top">
+        {#if topErrors.length}
+            <div class="top-errors">
+                <p> <b>Top {topErrors.length} errors</b> </p>
+                {#each topErrors as [error, count]}
+                    <div class="top-stat">
+                        <p>{count}x</p>
+                        {#if error.length > MAX_MESSAGE_LENGTH}
+                            <p>{error.slice(0, MAX_MESSAGE_LENGTH)}...</p>
+                        {:else}
+                            <p>{error}</p>
+                        {/if}
+                    </div>
+                {/each}
+            </div>
+        {/if}
+
+        {#if topIssues.length}
+            <div class="top-issues">
+                <p> <b>Top {topIssues.length} issues</b> </p>
+                {#each topIssues as [issue, count]}
+                    <div class="top-stat">
+                        <p>{count}x</p>
+                        {#if issue.length > MAX_MESSAGE_LENGTH}
+                            <p>{issue.slice(0, MAX_MESSAGE_LENGTH)}...</p>
+                        {:else}
+                            <p>{issue}</p>
+                        {/if}
+                    </div>
+                {/each}
+            </div>
+        {/if}
+    </div>
+
 </details>
 
 <style>
+    .top {
+        display: flex;
+        gap: 1rem;
+    }
     .by-models {
         display: flex;
         margin: 1rem;
         gap: 1rem;
     }
-    .top-errors {
-        margin: 1rem;
-    }
-    .error-stat {
+    .top-stat {
         display: flex;
         gap: 1rem;
     }
