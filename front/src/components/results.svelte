@@ -128,13 +128,6 @@
 
             <div class="filter-group">
                 <h3>Spec Filters</h3>
-                <label>Spec Status:
-                    <select bind:value={FilterParams.specStatus} onchange={applyFilters}>
-                        <option value="">All</option>
-                        <option value="notOk">Not Ok</option>
-                        <option value="ok">Ok</option>
-                    </select>
-                </label>
                 <label>Tags: <input type="text" bind:value={FilterParams.tag} oninput={applyFilters} /></label>
                 <label>Spec ID: <input type="text" bind:value={FilterParams.specId} oninput={applyFilters} /></label>
                 <label>Spec File: <input type="text" bind:value={FilterParams.specFile} oninput={applyFilters} /></label>
