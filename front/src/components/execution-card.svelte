@@ -22,6 +22,35 @@
             model.result.isActive = true;
         }
     })
+
+    function toDataDogLink(execution, result) {
+        const env = execution.environment;
+        const start = new Date(result.startTime).getTime();
+        const end = start + result.duration;
+
+        const searchParams = new URLSearchParams({
+            'query': `env:${env}`,
+            'agg_m': 'count',
+            'agg_m_source': 'base',
+            'agg_t': 'count',
+            'cols': 'core_service,core_resource_name,log_duration,log_http.method,log_http.status_code',
+            'fromUser': 'false',
+            'historicalData': 'true',
+            'messageDisplay': 'inline',
+            'query_translation_version': 'v0',
+            'sort': 'desc',
+            'sort_by': 'time',
+            'sort_order': 'asc',
+            'spanType': 'all',
+            'storage': 'hot',
+            'view': 'spans',
+            'start': start.toString(),
+            'end': end.toString(),
+            'paused': 'true'
+        });
+
+        return `https://app.datadoghq.com/apm/traces?${searchParams.toString()}`;
+    }
 </script>
 
 <div class="card">
@@ -50,7 +79,7 @@
                 <p class="col-small">No allure</p>
             {/if}
 
-            <a class="col-small" href={result.allureLink} target="_blank">DataDog</a>
+            <a class="col-small" href={toDataDogLink(execution, result)} target="_blank">DataDog</a>
             <p class="col-1">{toStartTime(result.startTime)}</p>
             <p class="col-1">{toDuration(result.duration)}</p>
 
