@@ -27,7 +27,7 @@ export async function runReview(targetResultError) {
         const ERROR_THRESHOLD = 0.85;
         const CALL_LOG_THRESHOLD = 0.7;
         const STACK_THRESHOLD = 0.7;
-        const FINAL_SCORE_THRESHOLD = 0.5;
+        const FINAL_SCORE_THRESHOLD = 0.7;
 
         const finalScore = (errorSimilarity * 0.4) + (callLogSimilarity * 0.3) + (stackSimilarity * 0.3);
 
@@ -62,7 +62,7 @@ export async function runReview(targetResultError) {
                 });
             }
 
-            const updatedResultError = await dbClient.resultError.update({
+            await dbClient.resultError.update({
                 where: { id: targetResultError.id },
                 data: {
                     assumptions: {
@@ -72,12 +72,24 @@ export async function runReview(targetResultError) {
             });
 
             console.log(`✅ Assumption ${assumptionRecord.id} automatically linked to result ${targetResultError.id}, time: ${new Date() - start}`);
-            return updatedResultError;
+        } else {
+            console.log(`❌ No known issue found for result ${targetResultError.id}, time: ${new Date() - start}`);
         }
     }
 
-    console.log(`❌ No known issue found for result ${targetResultError.id}, time: ${new Date() - start}`);
-    return targetResultError;
+    return dbClient.resultError.findUnique({
+        where: {
+            id: targetResultError.id
+        },
+        include: {
+            result: true,
+            assumptions: {
+                include: {
+                    issue: true,
+                }
+            },
+        }
+    });
 }
 
 /**

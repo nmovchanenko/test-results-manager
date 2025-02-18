@@ -1,64 +1,55 @@
 <script>
     import InlineIssue from './inline-issue.svelte';
+    import BulkActions from './bulk-actions.svelte';
     import {toDuration, toStartTime} from '../utils/date-time.converter.js';
 
-    let {execution, resultList} = $props();
-    let selectAll = $state(false);
-    let results = $derived.by(() => {
-        const resultState = $state(resultList.map(result => ({
-            isSelected: false,
-            ...result
-        })));
-
-        return resultState;
+    let {execution, resultModels} = $props();
+    let sortedResults = $derived(resultModels.toSorted((a, b) => a.result.retry - b.result.retry));
+    let selectAllExecutions = $state(false);
+    let selectedResults = $derived.by(() => {
+        return sortedResults.filter(model => model.result.isSelected)
     });
-    let selectedResults = $derived(results.filter(res => res.isSelected));
 
     function toggleSelectAll() {
-        selectAll = !selectAll;
-        for (const result of results) {
-            result.isSelected = selectAll;
+        selectAllExecutions = !selectAllExecutions;
+        for (const model of sortedResults) {
+            model.result.isSelected = selectAllExecutions;
         }
     }
 
-    function assignAll() {
-        console.log(results);
-    }
-
-    function toggleSidebar() {
-
-    }
-
-    async function runAutoReview() {
-        const errorIds = [];
-
-        for (const result of results) {
-            if(result.errors && result.errors.length) {
-                for (const error of result.errors) {
-                    errorIds.push(error.id);
-                }
-            }
+    $effect.pre(() => {
+        for (const model of sortedResults.values()) {
+            model.result.isActive = true;
         }
+    })
 
-        const response = await fetch('http://localhost:3001/api/result-errors/bulk-review', {
-            method: 'PATCH',
-            headers: {
-                'Content-type': 'application/json'
-            },
-            body: JSON.stringify({ errorIds }),
+    function toDataDogLink(execution, result) {
+        const env = execution.environment;
+        const start = new Date(result.startTime).getTime();
+        const end = start + result.duration;
+
+        const searchParams = new URLSearchParams({
+            'query': `env:${env}`,
+            'agg_m': 'count',
+            'agg_m_source': 'base',
+            'agg_t': 'count',
+            'cols': 'core_service,core_resource_name,log_duration,log_http.method,log_http.status_code',
+            'fromUser': 'false',
+            'historicalData': 'true',
+            'messageDisplay': 'inline',
+            'query_translation_version': 'v0',
+            'sort': 'desc',
+            'sort_by': 'time',
+            'sort_order': 'asc',
+            'spanType': 'all',
+            'storage': 'hot',
+            'view': 'spans',
+            'start': start.toString(),
+            'end': end.toString(),
+            'paused': 'true'
         });
 
-        if (!response.ok) {
-            throw new Error(`Auto review failed, ${await response.json()}`);
-        }
-    }
-
-    function hasUnreviewed(resultList) {
-        return resultList.some(({errors}) => errors.some(({assumptions}) => !assumptions.length));
-    }
-
-    function hasUnconfirmed(resultList) {
-        return resultList.some(({errors}) => errors.some(({assumptions}) => assumptions.some(({isConfirmed}) => !isConfirmed)));
+        return `https://app.datadoghq.com/apm/traces?${searchParams.toString()}`;
     }
 </script>
 
@@ -70,25 +61,10 @@
         <p class="col">{execution.name}</p>
         <p class="col-2">Playwright v.{execution.version}</p>
 
-        {#if selectedResults.length > 1}
-            <div class="bulk-section">
-                <p class="bulk-title">Bulk actions</p>
-
-                {#if hasUnreviewed(selectedResults)}
-                    <button class="auto-review" onclick={() => runAutoReview()}></button>
-                {/if}
-
-                {#if hasUnconfirmed(selectedResults)}
-                    <button class="confirm-issue"></button>
-                    <button class="reject-issue"></button>
-                {/if}
-
-                <button class="create-issue" onclick={toggleSidebar}></button>
-            </div>
-        {/if}
+        <BulkActions {selectedResults}/>
     </div>
 
-    {#each results as result}
+    {#each sortedResults as {result, errors, assumptions}}
         <div class="row">
             <input type="checkbox" bind:checked={result.isSelected}>
             <p class="status-box {result.status}"></p>
@@ -103,14 +79,14 @@
                 <p class="col-small">No allure</p>
             {/if}
 
-            <a class="col-small" href={result.allureLink} target="_blank">DataDog</a>
+            <a class="col-small" href={toDataDogLink(execution, result)} target="_blank">DataDog</a>
             <p class="col-1">{toStartTime(result.startTime)}</p>
             <p class="col-1">{toDuration(result.duration)}</p>
 
-            {#if result.errors && result.errors.length}
-                {#each result.errors as resultError}
+            {#if errors && errors.length}
+                {#each errors as resultError}
                     <p class="col">{resultError.message}</p>
-                    <InlineIssue {resultError}/>
+                    <InlineIssue {resultError} assumptions={assumptions.filter(a => a.resultErrorId === resultError.id)}/>
                 {/each}
             {/if}
 
@@ -119,31 +95,6 @@
 </div>
 
 <style>
-    button {
-        padding-inline: 1.5rem;
-    }
-    .bulk-section {
-        display: flex;
-        justify-content: flex-end;
-        border: 1px solid #6e049f;
-        border-radius: 4px;
-        background: var(--bg-color);
-    }
-    .bulk-title {
-        padding-inline: 1rem;
-    }
-    .create-issue {
-        background: url('https://icongr.am/clarity/add.svg?size=20&color=6e049f') no-repeat left center;
-    }
-    .auto-review {
-        background: url('https://icongr.am/clarity/wand.svg?size=20&color=6e049f') no-repeat left center;
-    }
-    .confirm-issue {
-        background: url('https://icongr.am/clarity/check.svg?size=17&color=03a50e') no-repeat left center;
-    }
-    .reject-issue {
-        background: url('https://icongr.am/clarity/trash.svg?size=17&color=ce1212') no-repeat left center;
-    }
     .card {
         margin-block: 1rem;
     }

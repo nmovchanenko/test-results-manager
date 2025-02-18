@@ -14,6 +14,7 @@
     "vite": "^6.0.5"
   },
   "dependencies": {
-    "svelte-typeahead": "^5.0.0"
+    "svelte-typeahead": "^5.0.0",
+    "tippy.js": "^6.3.7"
   }
 }

@@ -1,25 +1,15 @@
 <script>
     import IssueSidebar from './IssueSidebar.svelte';
+    import {Assumption, Issue} from '../lib/models.svelte.js';
 
-    let {resultError} = $props();
-    let assumption = $state((() => {
-        if (resultError.assumptions && resultError.assumptions.length) {
-            return resultError.assumptions[0];
-        }
-    })());
-    let issue = $state((() => {
-        if (assumption) {
-            return assumption.issue;
-        }
-    })());
-    let buttonAction = $derived(issue ? 'edit-issue' : 'create-issue');
+    let {resultError, assumptions} = $props();
     let showSidebar = $state(false);
 
     function toggleSidebar() {
         showSidebar = !showSidebar;
     }
 
-    async function confirm(isConfirmed) {
+    async function confirm(assumption, isConfirmed) {
         const response = await fetch(`http://localhost:3001/api/assumptions/${assumption.id}`, {
             method: 'PATCH',
             headers: {
@@ -36,28 +26,81 @@
         }
 
         if (response.status === 200) {
-            assumption = await response.json();
+            await response.json();
+        }
+    }
+
+    async function createAssumption(issue) {
+        if (!issue) {
+            throw new Error('Unable to create assumption with no linked issue');
+        }
+
+        if(!issue.id) {
+            const issueResponse = await fetch(`http://localhost:3001/api/issues`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(issue),
+            });
+
+            if (!issueResponse.ok) {
+                throw new Error(`Cant post new issue ${issueResponse.status}`);
+            }
+
+            issue = await issueResponse.json();
+        }
+
+        const assumptionResponse = await fetch('http://localhost:3001/api/assumptions', {
+            method: 'POST',
+            headers: {
+                'Content-type': 'application/json'
+            },
+            body: JSON.stringify({
+                madeBy: 'user',
+                score: 1,
+                isConfirmed: true,
+                issueId: issue.id,
+                resultErrorId: resultError.id
+            }),
+        });
+
+        if (!assumptionResponse.ok) {
+            throw new Error(`Cant post new assumption ${assumptionResponse.statusText}`)
+        }
+
+        const assumptionRecord = await assumptionResponse.json();
+
+        if (assumptionRecord) {
+            assumptionRecord.issue = new Issue(issue);
+            assumptions.push(new Assumption(assumptionRecord));
+            toggleSidebar();
+        } else {
+            console.error('Failed to assign issue');
         }
     }
 </script>
 
-<div class="assumption-row col">
-    {#if assumption && assumption.issue}
-        <p class="col">{assumption.issue.name}</p>
-    {/if}
+{#if assumptions && assumptions.length}
+    {#each assumptions as assumption}
+        <div class="assumption-row col">
+            {#if assumption && assumption.issue}
+                <p class="col">{assumption.issue.name}</p>
+            {/if}
 
-    {#if assumption && !assumption.isConfirmed}
-        <p>{Math.ceil(assumption.score) * 100}%</p>
-        <button class="confirm-issue" onclick={() => confirm(true)}></button>
-        <button class="reject-issue" onclick={() => confirm(false)}></button>
-    {:else}
-        <button class="{buttonAction}" onclick={toggleSidebar}></button>
-
-        {#if showSidebar}
-            <IssueSidebar {resultError} {toggleSidebar}/>
-        {/if}
+            {#if assumption && !assumption.isConfirmed}
+                <p>{Math.round(assumption.score * 100)}%</p>
+                <button class="confirm-issue" onclick={() => confirm(assumption, true)}></button>
+                <button class="reject-issue" onclick={() => confirm(assumption, false)}></button>
+            {:else}
+                <button class="edit-issue" onclick={toggleSidebar}></button>
+            {/if}
+        </div>
+    {/each}
+{:else}
+    <button class="create-issue" onclick={toggleSidebar}></button>
+    {#if showSidebar}
+        <IssueSidebar {resultError} {toggleSidebar} {createAssumption}/>
     {/if}
-</div>
+{/if}
 
 <style>
     button {
