@@ -91,6 +91,10 @@
             }
         }
     }
+
+    // tests
+    const shownTotal = $derived(filteredResults.filter(r => r.result.isActive).length);
+    const selectedTotal = $derived(filteredResults.filter(r => r.result.isSelected).length);
 </script>
 
 <div class="main-container">
@@ -124,6 +128,13 @@
 
             <div class="filter-group">
                 <h3>Spec Filters</h3>
+                <label>Spec Status:
+                    <select bind:value={FilterParams.specStatus} onchange={applyFilters}>
+                        <option value="">All</option>
+                        <option value="notOk">Not Ok</option>
+                        <option value="ok">Ok</option>
+                    </select>
+                </label>
                 <label>Tags: <input type="text" bind:value={FilterParams.tag} oninput={applyFilters} /></label>
                 <label>Spec ID: <input type="text" bind:value={FilterParams.specId} oninput={applyFilters} /></label>
                 <label>Spec File: <input type="text" bind:value={FilterParams.specFile} oninput={applyFilters} /></label>
@@ -156,6 +167,7 @@
 
         <div class="bulk-panel row">
             <label> <input type="checkbox" onchange={toggleSelectAll}/> Select all </label>
+            <pre>Shown {shownTotal}. Selected {selectedTotal}</pre>
             <BulkActions {selectedResults}/>
         </div>
 
