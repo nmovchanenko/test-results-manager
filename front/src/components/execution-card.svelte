@@ -1,6 +1,7 @@
 <script>
     import InlineIssue from './inline-issue.svelte';
     import BulkActions from './bulk-actions.svelte';
+    import Modal from './modal.svelte';
     import {toDuration, toStartTime} from '../utils/date-time.converter.js';
 
     let {execution, resultModels} = $props();
@@ -9,6 +10,11 @@
     let selectedResults = $derived.by(() => {
         return sortedResults.filter(model => model.result.isSelected)
     });
+    let showModal = $state(false);
+
+    function toggleModal() {
+        showModal = !showModal;
+    }
 
     function toggleSelectAll() {
         selectAllExecutions = !selectAllExecutions;
@@ -85,11 +91,26 @@
 
             {#if errors && errors.length}
                 {#each errors as resultError}
-                    <p class="col">{resultError.message}</p>
+                    <p class="col" onclick={() => toggleModal()}>{resultError.message}</p>
                     <InlineIssue {resultError} assumptions={assumptions.filter(a => a.resultErrorId === resultError.id)}/>
+
+                    <Modal bind:showModal>
+                        {#snippet header()}
+                            <h2>Result Error</h2>
+                        {/snippet}
+
+                        <pre>{resultError.message}</pre>
+
+                        {#if resultError.callLog?.length}
+                            <pre>{resultError.callLog?.join('\n')}</pre>
+                        {/if}
+
+                        {#if resultError.callStack?.length}
+                            <pre>{resultError.callStack?.join('\n')}</pre>
+                        {/if}
+                    </Modal>
                 {/each}
             {/if}
-
         </div>
     {/each}
 </div>
