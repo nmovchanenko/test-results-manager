@@ -18,6 +18,7 @@ export let FilterParams = $state({
     status: 'failed',
     reviewStatus: '',
     errorMessage: '',
+    isLastAttempt: false,
     from: formatter.format(weekAgo),
     to: formatter.format(today),
     page: 1

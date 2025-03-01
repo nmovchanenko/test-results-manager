@@ -14,13 +14,32 @@
     const dateConfigs = $state(getDateRangeMap());
     const resultModels = $state(toModels(results));
     const activeDaysResults = $derived.by(() => {
-        return resultModels.filter(({result}) => {
+        const activeModels = resultModels.filter(({result}) => {
             const dayConfig = dateConfigs.find(config => config.date === result.dateKey);
             return dayConfig?.isActive;
-        })
+        });
+
+        if (FilterParams.isLastAttempt) {
+            const executionMap = {};
+            for (const model of activeModels) {
+                const spec = model.spec;
+                const execution = model.execution;
+                const groupId = `${spec.id}_${execution.id}`;
+
+                if (!executionMap[groupId]) {
+                    executionMap[groupId] = [];
+                }
+
+                executionMap[groupId].push(model);
+            }
+
+            return Object.values(executionMap).map(m => m[m.length - 1]);
+        }
+
+        return activeModels;
     });
     const filteredResults = $derived(filterResults(activeDaysResults));
-    const groups = $derived.by(() => {
+    const displayGroups = $derived.by(() => {
         const specMap = filteredResults.reduce((map, model) => {
             const {spec, ...rest} = model;
 
@@ -48,7 +67,7 @@
         return specMap;
     });
     let selectedResults = $derived.by(() => {
-        return Array.from(groups.values()).flat().filter(model => model.result.isSelected);
+        return Array.from(displayGroups.values()).flat().filter(model => model.result.isSelected);
     });
 
     let sidebarExpanded = $state(true);
@@ -83,7 +102,7 @@
     function toggleSelectAll() {
         selectAll = !selectAll;
 
-        for (const group of groups.values()) {
+        for (const group of displayGroups.values()) {
             for (const model of group) {
                 if (model.result.isActive) {
                     model.result.isSelected = selectAll;
@@ -103,6 +122,7 @@
         {#if sidebarExpanded}
             <div class="filter-group">
                 <h3>Result Filters</h3>
+                <label>Last attempt: <input type="checkbox" bind:checked={FilterParams.isLastAttempt} onchange={applyFilters} /></label>
                 <label>Status:
                     <select bind:value={FilterParams.status} onchange={applyFilters}>
                         <option value="">All</option>
@@ -121,7 +141,6 @@
                 </label>
 
                 <label>Error Message: <input type="text" bind:value={FilterParams.errorMessage} onchange={applyFilters} /></label>
-
                 <label>From: <input type="date" bind:value={FilterParams.from} onchange={applyFilters} /></label>
                 <label>To: <input type="date" bind:value={FilterParams.to} onchange={applyFilters} /></label>
             </div>
@@ -165,8 +184,8 @@
         </div>
 
         <div class="results-list">
-            {#if groups.size > 0}
-                {#each groups.entries() as [spec, results]}
+            {#if displayGroups.size > 0}
+                {#each displayGroups.entries() as [spec, results]}
                     <div class="result-card">
                         <SpecSection {spec} {results} {dateConfigs}/>
                     </div>
