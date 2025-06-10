@@ -1,0 +1,15 @@
+-- AlterTable
+ALTER TABLE "Result" ADD COLUMN "assumptionId" INTEGER;
+
+-- CreateTable
+CREATE TABLE "Assumption" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "isConfirmed" BOOLEAN NOT NULL,
+    "score" REAL NOT NULL,
+    "resultId" INTEGER,
+    "issueId" INTEGER NOT NULL,
+    CONSTRAINT "Assumption_issueId_fkey" FOREIGN KEY ("issueId") REFERENCES "Issue" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "Assumption_resultId_fkey" FOREIGN KEY ("resultId") REFERENCES "Result" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);

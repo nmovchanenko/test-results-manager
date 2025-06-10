@@ -2,6 +2,8 @@
     import tippy from 'tippy.js';
     import 'tippy.js/dist/tippy.css';
     import {Assumption} from '../lib/models.svelte.js';
+    import Modal from './modal.svelte';
+    import {generateErrorReport, convertToCSV} from '../utils/report.js';
 
     const {selectedResults} = $props();
     const unreviewedResults = $derived(selectedResults.filter(({assumptions}) => !assumptions.length));
@@ -10,6 +12,7 @@
         return assumptions.some(({isConfirmed}) => !isConfirmed)
     }));
     const unconfirmedCount = $derived(unconfirmedResults.length);
+    let showReportModal = $state(false);
 
     function tooltip(node, fn) {
         $effect(() => {
@@ -38,7 +41,7 @@
             }
         }
 
-        const response = await fetch('http://localhost:3001/api/result-errors/bulk-review', {
+        const response = await fetch('http://localhost:3001/api/v1/result-errors/bulk-review', {
             method: 'PATCH',
             headers: {
                 'Content-type': 'application/json'
@@ -66,7 +69,7 @@
     async function confirmAll() {
         for (const model of unconfirmedResults) {
             for (const assumption of model.assumptions) {
-                const response = await fetch(`http://localhost:3001/api/assumptions/${assumption.id}`, {
+                const response = await fetch(`http://localhost:3001/api/v1/assumptions/${assumption.id}`, {
                     method: 'PATCH',
                     headers: {
                         'Content-type': 'application/json',
@@ -88,7 +91,7 @@
     async function rejectAll() {
         for (const model of unconfirmedResults) {
             for (const assumption of model.assumptions) {
-                const response = await fetch(`http://localhost:3001/api/assumptions/${assumption.id}`, {
+                const response = await fetch(`http://localhost:3001/api/v1/assumptions/${assumption.id}`, {
                     method: 'PATCH',
                     headers: {
                         'Content-type': 'application/json',
@@ -106,12 +109,28 @@
             }
         }
     }
+
+    async function generateReport(results) {
+        // console.log(generateErrorReport(results));
+        console.log(convertToCSV(results));
+        // console.log(results);
+    }
 </script>
 
 
 {#if selectedResults.length > 1}
     <div class="bulk-section">
         <p class="bulk-title">Bulk actions</p>
+
+        <button
+                aria-label="aria label"
+                class="report"
+                onclick={() => generateReport(selectedResults)}
+                use:tooltip={() => ({
+                        content: `Generate report for ${selectedResults.length} results`,
+                        arrow: true,
+                    })}
+        ></button>
 
         {#if unreviewedCount}
             <button
@@ -180,9 +199,12 @@
         background: url('https://icongr.am/clarity/wand.svg?size=20&color=6e049f') no-repeat left center;
     }
     .confirm-issue {
-        background: url('https://icongr.am/clarity/check.svg?size=17&color=03a50e') no-repeat left center;
+        background: url('https://icongr.am/clarity/check.svg?size=20&color=03a50e') no-repeat left center;
     }
     .reject-issue {
-        background: url('https://icongr.am/clarity/trash.svg?size=17&color=ce1212') no-repeat left center;
+        background: url('https://icongr.am/clarity/trash.svg?size=20&color=ce1212') no-repeat left center;
+    }
+    .report {
+        background: url('https://icongr.am/clarity/book.svg?size=20&color=183c63') no-repeat left center;
     }
 </style>

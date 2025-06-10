@@ -49,7 +49,7 @@
             issue = await issueResponse.json();
         }
 
-        const assumptionResponse = await fetch('http://localhost:3001/api/assumptions', {
+        const assumptionResponse = await fetch('http://localhost:3001/api/v1/assumptions', {
             method: 'POST',
             headers: {
                 'Content-type': 'application/json'

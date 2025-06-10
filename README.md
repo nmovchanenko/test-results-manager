@@ -9,6 +9,8 @@ npx prisma migrate dev --name lowerCasedResultError
 Spec filters:
 - filter by error message + group by error message like allure do
 - filter mode: filter specs by 'has status' (hasFailed, hasSkipped, etc)
+- application type - v1, v2, etc
+- buildings/state ?
 
 Global:
     Bulk actions:

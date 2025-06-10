@@ -1,6 +1,6 @@
 const today = new Date();
 const weekAgo = new Date();
-weekAgo.setDate(today.getDate() - 7);
+weekAgo.setDate(today.getDate() - 5);
 
 const formatter = new Intl.DateTimeFormat('en-CA', {
     year: 'numeric',

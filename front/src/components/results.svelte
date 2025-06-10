@@ -67,7 +67,11 @@
         return specMap;
     });
     let selectedResults = $derived.by(() => {
-        return Array.from(displayGroups.values()).flat().filter(model => model.result.isSelected);
+        const selected = Array.from(displayGroups.values()).flat().filter(model => model.result.isSelected);
+        return selected.map(res => {
+            res.spec = Array.from(displayGroups.keys()).find(spec => spec.id === res.result.specId);
+            return res;
+        })
     });
 
     let sidebarExpanded = $state(true);
