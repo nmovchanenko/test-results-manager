@@ -23,7 +23,7 @@
             limit: 10,
         });
 
-        const res = await fetch(`http://localhost:3001/api/v1/issues?${queryParams}`);
+        const res = await fetch(`http://localhost:3002/api/v1/issues?${queryParams}`);
         const data = await res.json();
 
         existingIssues = data.issues;

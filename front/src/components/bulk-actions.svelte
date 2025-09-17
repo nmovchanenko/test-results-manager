@@ -41,7 +41,7 @@
             }
         }
 
-        const response = await fetch('http://localhost:3001/api/v1/result-errors/bulk-review', {
+        const response = await fetch('http://localhost:3002/api/v1/result-errors/bulk-review', {
             method: 'PATCH',
             headers: {
                 'Content-type': 'application/json'
@@ -69,7 +69,7 @@
     async function confirmAll() {
         for (const model of unconfirmedResults) {
             for (const assumption of model.assumptions) {
-                const response = await fetch(`http://localhost:3001/api/v1/assumptions/${assumption.id}`, {
+                const response = await fetch(`http://localhost:3002/api/v1/assumptions/${assumption.id}`, {
                     method: 'PATCH',
                     headers: {
                         'Content-type': 'application/json',
@@ -91,7 +91,7 @@
     async function rejectAll() {
         for (const model of unconfirmedResults) {
             for (const assumption of model.assumptions) {
-                const response = await fetch(`http://localhost:3001/api/v1/assumptions/${assumption.id}`, {
+                const response = await fetch(`http://localhost:3002/api/v1/assumptions/${assumption.id}`, {
                     method: 'PATCH',
                     headers: {
                         'Content-type': 'application/json',

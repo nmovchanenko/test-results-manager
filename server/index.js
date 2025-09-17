@@ -39,7 +39,7 @@ app.use(loggingMiddleware);
 app.use("/api/v1", routes);
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002;
 
 app.listen(PORT, () => {
   console.log(`Running on Port ${PORT}`);

@@ -7,7 +7,7 @@ export const loadResults = async () => {
     to: FilterParams.to,
   });
   const response = await fetch(
-    `http://localhost:3001/api/v1/results?${queryParams}`
+    `http://localhost:3002/api/v1/results?${queryParams}`
   );
 
   if (!response.ok) {
