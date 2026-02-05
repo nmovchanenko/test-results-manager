@@ -10,7 +10,7 @@
     }
 
     async function confirm(assumption, isConfirmed) {
-        const response = await fetch(`http://localhost:3002/api/assumptions/${assumption.id}`, {
+        const response = await fetch(`http://localhost:3002/api/v1/assumptions/${assumption.id}`, {
             method: 'PATCH',
             headers: {
                 'Content-type': 'application/json',
@@ -36,7 +36,7 @@
         }
 
         if(!issue.id) {
-            const issueResponse = await fetch(`http://localhost:3002/api/issues`, {
+            const issueResponse = await fetch(`http://localhost:3002/api/v1/issues`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(issue),
