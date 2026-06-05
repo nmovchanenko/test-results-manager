@@ -58,7 +58,7 @@
             if (specMap.has(spec)) {
                 const config = dateConfigs.find(config => config.date === rest.result.dateKey);
 
-                if (!config.isActive) {
+                if (!config?.isActive) {
                     specMap.get(spec).push(rest);
                 }
             }
