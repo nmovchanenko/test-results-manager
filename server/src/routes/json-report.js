@@ -97,6 +97,7 @@ router.post("/json-report", async (request, response, next) => {
         if (!resultRecord) {
           const recordData = {
             allureLink: result.allureLink,
+            tracesLink: result.tracesLink,
             retry: result.retry,
             status: result.status,
             duration: result.duration,
@@ -128,6 +129,8 @@ router.post("/json-report", async (request, response, next) => {
                 location: parsedError.location
                   ? `${parsedError.location.file}:${parsedError.location.line}`
                   : "",
+                prompt: result.prompt,
+                tracesLink: result.tracesLink
               },
             });
 

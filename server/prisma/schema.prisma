@@ -39,6 +39,7 @@ model Result {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   allureLink  String?
+  tracesLink  String?
   retry       Int
   status      String
   duration    Int
@@ -65,6 +66,8 @@ model ResultError {
   result          Result?      @relation(fields: [resultId], references: [id])
   resultId        Int?
   assumptions     Assumption[]
+  prompt          String?
+  tracesLink      String?
 }
 
 model Assumption {

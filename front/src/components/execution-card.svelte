@@ -55,7 +55,7 @@
             'paused': 'true'
         });
 
-        return `https://app.datadoghq.com/apm/traces?${searchParams.toString()}`;
+        return `https://app.datadoghq.com/logs?${searchParams.toString()}`;
     }
 </script>
 
@@ -86,6 +86,13 @@
             {/if}
 
             <a class="col-small" href={toDataDogLink(execution, result)} target="_blank">DataDog</a>
+
+            {#if result.tracesLink}
+                <a class="col-small" href={result.tracesLink} target="_blank">Traces</a>
+            {:else}
+                <p class="col-small">No traces</p>
+            {/if}
+
             <p class="col-1">{toStartTime(result.startTime)}</p>
             <p class="col-1">{toDuration(result.duration)}</p>
 
